@@ -1,0 +1,48 @@
+--- a/SourceCode/Primpoly/ppPolynomial.cpp
++++ b/SourceCode/Primpoly/ppPolynomial.cpp
+@@ -1077,7 +1077,10 @@ void Polynomial::initialTrialPoly( const ppuint n, const ppuint p )
+     }
+     
+     (*this)[ static_cast<int>( n ) ] = 1 ;
+-    f_[ 0 ] = 0 ;
++    for (size_t i = 0 ;  i < 4 ;  ++i)
++    {
++        f_[ i ] = 1;
++    }
+ }
+ 
+ 
+@@ -1117,16 +1120,25 @@ void Polynomial::initialTrialPoly( const ppuint n, const ppuint p )
+ 
+ void Polynomial::nextTrialPoly()
+ {
+-    ++f_[ 0 ] ;     // Add 1, i.e. increment the coefficient of the x term.
+-
+-    //   Sweep through the number from right to left, propagating carries.  Skip
+-    //   the constant and the nth degree terms.
+-    for (int digit_num = 0 ;  digit_num <= n_ - 2 ;  ++digit_num)
++    for (size_t i = 0 ;  i < 5 ;  i++)
+     {
+-        if (f_[ digit_num ] == p_)   //  Propagate carry to next digit.
++        for (size_t j = i ;  j < n_ - 1 ;  j++)
+         {
+-            f_[ digit_num ] = 0 ;
+-            ++f_[ digit_num + 1 ] ;
++            if (f_[ j ])
++            {
++                if (f_[j + 1])
++                {
++                    f_[j] = 0;
++                    f_[i] = 1;
++                    break;
++                }
++                else
++                {
++                    f_[j] = 0;
++                    f_[j + 1] = 1;
++                    return;
++                }
++            }
+         }
+     }
+ }
