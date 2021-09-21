@@ -29,6 +29,10 @@ class Context(object):
 _current_context: contextvars.ContextVar[Context] = contextvars.ContextVar("gf_context")
 
 
+# Don't contaminate the namespace
+del contextvars
+
+
 def getcontext() -> Context:
     """Returns this thread's context.
     If this thread does not yet have a context, returns
@@ -161,23 +165,27 @@ class BinaryPolynomial(object):
         return bool(int(self))
 
     def __str__(self) -> str:
-        return f"BinaryPolynomial({bin(self._value)})"
+        return f"BinaryPolynomial({bin(int(self))})"
+
+    def __hash__(self) -> int:
+        return hash(int(self))
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, (int, BinaryPolynomial)):
-            other = self._coerce(other)
-            return self._value == other._value
-        return False
+        if isinstance(other, int):
+            other = type(self)(other)
+        if isinstance(other, BinaryPolynomial) and self._value == other._value:
+            return True
+        return NotImplemented
 
     del SelfType
 
 
-class Element(object):
+class GFElement(object):
     __slots__ = "_value", "_modulus"
     _value: BinaryPolynomial
     _modulus: BinaryPolynomial
 
-    SelfType = TypeVar("SelfType", bound="Element")
+    SelfType = TypeVar("SelfType", bound="GFElement")
 
     def __init__(
         self,
@@ -237,6 +245,9 @@ class Element(object):
         other = self._coerce(other)
         return self * ~other
 
+    def __rtruediv__(self: SelfType, other: Union[BinaryPolynomial, int]) -> SelfType:
+        return type(self)(other, self._modulus) / self
+
     def __invert__(self: SelfType) -> SelfType:
         t: Union[BinaryPolynomial, int] = 0
         t_new: Union[BinaryPolynomial, int] = 1
@@ -256,21 +267,25 @@ class Element(object):
     def __str__(self) -> str:
         context = getcontext()
         if self._modulus == context.modulus:
-            return f"Element({bin(int(self._value))})"
+            return f"GFElement({bin(int(self._value))})"
         else:
-            return f"Element({bin(int(self._value))} over {bin(int(self._modulus))})"
+            return f"GFElement({bin(int(self._value))} over {bin(int(self._modulus))})"
+
+    def __hash__(self) -> int:
+        return hash(int(self))
 
     def __int__(self) -> int:
         return int(self._value)
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, (int, Element)):
-            other = self._coerce(other)
-            return self._value == other._value
-        return False
+        if isinstance(other, (BinaryPolynomial, int)):
+            other = type(self)(other, self._modulus)
+        if (
+            isinstance(other, GFElement)
+            and self._value == other._value
+            and self._modulus == other._modulus
+        ):
+            return True
+        return NotImplemented
 
     del SelfType
-
-
-# Don't contaminate the namespace
-del contextvars
