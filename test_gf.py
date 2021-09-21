@@ -10,7 +10,7 @@ print("actual:", bin(int(gf.BinaryPolynomial(a) * gf.BinaryPolynomial(b))))
 
 context = gf.getcontext()
 context.bit_length = 8
-context.modulus = 0b11011
+context.modulus = 0b100011011
 
 ###
 
@@ -31,9 +31,11 @@ print("actual:", bin(int((gf.Element(a) * gf.Element(b))._value)))
 
 ###
 
-#a = 0b110011
-a = 0b01010011
+a = 0b1010011
+#a = 0b01010011
 
 #print("alleged:", bin(0b1101100))
 print("alleged:", bin(0b11001010))
-print("actual:", bin(int((~gf.Element(a))._value)))
+actual = ~gf.Element(a)
+print("actual:", bin(int((actual)._value)))
+print(bin(int((actual * a)._value)))
