@@ -123,7 +123,7 @@ class BinaryPolynomial:
         a = self._value
         b = other._value
         p = 0
-        while a and b:
+        while b:
             if b & 1:
                 p ^= a
             b >>= 1
