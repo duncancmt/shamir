@@ -32,9 +32,9 @@ print("actual:", bin(int((gf.GFElement(a) * gf.GFElement(b))._value)))
 ###
 
 a = 0b1010011
-#a = 0b01010011
+# a = 0b01010011
 
-#print("alleged:", bin(0b1101100))
+# print("alleged:", bin(0b1101100))
 print("alleged:", bin(0b11001010))
 actual = ~gf.GFElement(a)
 print("actual:", bin(int((actual)._value)))

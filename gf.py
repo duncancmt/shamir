@@ -1,5 +1,5 @@
-from typing import Optional, TypeVar, Type, Tuple, Union, Literal
 from types import TracebackType
+from typing import Literal, Optional, Tuple, Type, TypeVar, Union
 
 _default_prim_poly = {
     256: (10, 5, 2),
@@ -26,7 +26,9 @@ class Context(object):
     del SelfType
 
 
-_current_context: contextvars.ContextVar[Context] = contextvars.ContextVar("gf_context")
+_current_context: contextvars.ContextVar[Context] = contextvars.ContextVar(
+    "gf_context"
+)
 
 
 # Don't contaminate the namespace
@@ -216,7 +218,9 @@ class GFElement(object):
         other = self._coerce(other)
         return type(self)(self._value + other._value, self._modulus)
 
-    def __radd__(self: SelfType, other: Union[BinaryPolynomial, int]) -> SelfType:
+    def __radd__(
+        self: SelfType, other: Union[BinaryPolynomial, int]
+    ) -> SelfType:
         return type(self)(other, self._modulus) + self
 
     def __neg__(self: SelfType) -> SelfType:
@@ -227,7 +231,9 @@ class GFElement(object):
     ) -> SelfType:
         return self + -other
 
-    def __rsub__(self: SelfType, other: Union[BinaryPolynomial, int]) -> SelfType:
+    def __rsub__(
+        self: SelfType, other: Union[BinaryPolynomial, int]
+    ) -> SelfType:
         return type(self)(other, self._modulus) - self
 
     def __mul__(
@@ -236,7 +242,9 @@ class GFElement(object):
         other = self._coerce(other)
         return type(self)(self._value * other._value, self._modulus)
 
-    def __rmul__(self: SelfType, other: Union[BinaryPolynomial, int]) -> SelfType:
+    def __rmul__(
+        self: SelfType, other: Union[BinaryPolynomial, int]
+    ) -> SelfType:
         return type(self)(other, self._modulus) * self
 
     def __truediv__(
@@ -245,7 +253,9 @@ class GFElement(object):
         other = self._coerce(other)
         return self * ~other
 
-    def __rtruediv__(self: SelfType, other: Union[BinaryPolynomial, int]) -> SelfType:
+    def __rtruediv__(
+        self: SelfType, other: Union[BinaryPolynomial, int]
+    ) -> SelfType:
         return type(self)(other, self._modulus) / self
 
     def __invert__(self: SelfType) -> SelfType:
