@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Type, Tuple, Union, Literal, NoReturn
+from typing import Optional, TypeVar, Type, Tuple, Union, Literal
 from types import TracebackType
 
 _default_prim_poly = {
@@ -6,26 +6,22 @@ _default_prim_poly = {
     224: (12, 7, 2),
     192: (15, 11, 5),
     128: (7, 2, 1),
-    8: (4, 3, 1),
+    8: (4, 3, 1),  # Rijndael modulus, for testing
 }
 
 import contextvars
 
 
 class Context(object):
-    bit_length: int
     modulus: int
 
-    def __init__(self, bit_length: int, modulus: int) -> None:
-        if modulus.bit_length() >= bit_length:
-            raise ValueError("modulus exceeds bit length")
-        self.bit_length = bit_length
+    def __init__(self, modulus: int) -> None:
         self.modulus = modulus
 
     SelfType = TypeVar("SelfType", bound="Context")
 
     def copy(self: SelfType) -> SelfType:
-        return type(self)(self.bit_length, self.modulus)
+        return type(self)(self.modulus)
 
     del SelfType
 
@@ -42,7 +38,7 @@ def getcontext() -> Context:
     try:
         return _current_context.get()
     except LookupError:
-        context = Context(1, 0)
+        context = Context(0)
         _current_context.set(context)
         return context
 
@@ -157,12 +153,6 @@ class BinaryPolynomial(object):
 
     def __rmod__(self: SelfType, other: int) -> SelfType:
         return type(self)(other) % self
-
-    def __div__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
-        return NotImplemented
-
-    def __rdiv__(self: SelfType, other: int) -> NoReturn:
-        raise NotImplementedError
 
     def __int__(self) -> int:
         return self._value
@@ -282,7 +272,7 @@ class Element(object):
         return type(self)(t, self._modulus)
 
     def __bool__(self) -> bool:
-        return self._value % self._modulus != 0
+        return bool(self._value % self._modulus)
 
     def __str__(self) -> str:
         context = getcontext()
