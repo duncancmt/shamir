@@ -13,14 +13,18 @@ _default_prim_poly = {
 
 
 class Context:
+    """Stores the default modulus for newly-created field elements."""
+
     modulus: int
 
     SelfType = TypeVar("SelfType", bound="Context")
 
     def __init__(self, modulus: int) -> None:
+        """Set the modulus."""
         self.modulus = modulus
 
     def copy(self: SelfType) -> SelfType:
+        """Return a copy with the same modulus."""
         return type(self)(self.modulus)
 
     del SelfType
@@ -36,10 +40,10 @@ del contextvars
 
 
 def getcontext() -> Context:
-    """Returns this thread's context.
-    If this thread does not yet have a context, returns
-    a new context and sets this thread's context.
-    New contexts are copies of DefaultContext.
+    """Return this thread's context.
+
+    If this thread does not yet have a context, return a new context and set
+    this thread's context. New contexts have zero modulus, which is invalid.
     """
     try:
         return _current_context.get()
@@ -55,6 +59,7 @@ def setcontext(context: Context) -> None:
 
 
 def localcontext(ctx: Optional[Context] = None) -> "_ContextManager":
+    """Return a context manager that swaps the current context for the given context."""
     if ctx is None:
         ctx = getcontext()
     return _ContextManager(ctx)
