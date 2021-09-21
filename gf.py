@@ -226,22 +226,7 @@ class Element(object):
         self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
     ) -> SelfType:
         other = self._coerce(other)
-        modulus = self._modulus._value
-        selector = 1 << (modulus.bit_length() - 1)
-        mask = selector - 1
-        modulus &= mask
-        a = self._value._value
-        b = other._value._value
-        p = 0
-        while a and b:
-            if b & 1:
-                p ^= a
-            b >>= 1
-            a <<= 1
-            if a & selector:
-                a ^= modulus
-                a &= mask
-        return type(self)(p, self._modulus)
+        return type(self)(self._value * other._value, self._modulus)
 
     def __rmul__(self: SelfType, other: Union[BinaryPolynomial, int]) -> SelfType:
         return type(self)(other, self._modulus) * self
