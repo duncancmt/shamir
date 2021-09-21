@@ -27,7 +27,7 @@ a = 0b110001
 b = 0b110
 
 print("alleged:", bin(0b10100110))
-print("actual:", bin(int((gf.Element(a) * gf.Element(b))._value)))
+print("actual:", bin(int((gf.GFElement(a) * gf.GFElement(b))._value)))
 
 ###
 
@@ -36,6 +36,18 @@ a = 0b1010011
 
 #print("alleged:", bin(0b1101100))
 print("alleged:", bin(0b11001010))
-actual = ~gf.Element(a)
+actual = ~gf.GFElement(a)
 print("actual:", bin(int((actual)._value)))
 print(bin(int((actual * a)._value)))
+
+###
+
+inverses = set()
+for i in range(1, 256):
+    i = gf.GFElement(i)
+    i_inverse = ~i
+    inverses.add(i_inverse)
+    assert i * i_inverse == 1
+assert len(inverses) == 255
+
+print("exhaustive test of AES modulus passed")
