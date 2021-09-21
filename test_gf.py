@@ -8,15 +8,15 @@ print("actual:", bin(int(gf.BinaryPolynomial(a) * gf.BinaryPolynomial(b))))
 
 ##
 
-context = gf.getcontext()
-context.modulus = 0b100011011
+gf.setfield(8)
 
 ###
 
-m = 0b100011011
 a = 0b11100010110001
 
-q, r = divmod(gf.BinaryPolynomial(a), gf.BinaryPolynomial(m))
+q, r = divmod(
+    gf.BinaryPolynomial(a), gf.BinaryPolynomial(gf.getcontext().modulus)
+)
 print("alleged:", bin(0b111010), bin(0b10001111))
 print("actual:", bin(q._value), bin(r._value))
 

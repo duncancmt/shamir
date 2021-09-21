@@ -59,6 +59,14 @@ def localcontext(ctx: Optional[Context] = None) -> "_ContextManager":
     return _ContextManager(ctx)
 
 
+def setfield(bit_length: int) -> None:
+    modulus = (1 << bit_length) | 1
+    for i in _default_prim_poly[bit_length]:
+        modulus |= 1 << i
+    ctx = Context(modulus)
+    setcontext(ctx)
+
+
 class _ContextManager:
     """Context manager class to support localcontext().
     Sets a copy of the supplied context in __enter__() and restores
