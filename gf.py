@@ -238,17 +238,16 @@ class Element(object):
         return self * ~other
 
     def __invert__(self: SelfType) -> SelfType:
-        modulus = self._modulus
         t: Union[BinaryPolynomial, int] = 0
-        newt: Union[BinaryPolynomial, int] = 1
-        r = modulus
-        newr = self._value
-        while newr:
-            quotient = r // newr
-            r, newr = newr, r - quotient * newr
-            t, newt = newt, t - quotient * newt
+        t_new: Union[BinaryPolynomial, int] = 1
+        r = self._modulus
+        r_new = self._value
+        while r_new:
+            quotient = r // r_new
+            r, r_new = r_new, r - quotient * r_new
+            t, t_new = t_new, t - quotient * t_new
         if r != 1:
-            raise ZeroDivisionError("zero element or modulus is not irreducible")
+            raise ZeroDivisionError("zero element or modulus is reducible")
         return type(self)(t, self._modulus)
 
     def __bool__(self) -> bool:
