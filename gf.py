@@ -1,4 +1,5 @@
 import contextvars
+import secrets
 from types import TracebackType
 from typing import Literal, Optional, Tuple, Type, TypeVar, Union
 
@@ -308,3 +309,21 @@ class GFElement:
         return NotImplemented
 
     del SelfType
+
+
+def random() -> GFElement:
+    modulus = getcontext().modulus
+    value = secrets.randbits(modulus.bit_length() - 1)
+    return GFElement(value, modulus)
+
+
+__all__ = [
+    "Context",
+    "getcontext",
+    "setcontext",
+    "localcontext",
+    "setfield",
+    "BinaryPolynomial",
+    "GFElement",
+    "random",
+]
