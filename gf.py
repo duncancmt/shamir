@@ -1,3 +1,4 @@
+import contextvars
 from types import TracebackType
 from typing import Literal, Optional, Tuple, Type, TypeVar, Union
 
@@ -9,16 +10,14 @@ _default_prim_poly = {
     8: (4, 3, 1),  # Rijndael modulus, for testing
 }
 
-import contextvars
 
-
-class Context(object):
+class Context:
     modulus: int
+
+    SelfType = TypeVar("SelfType", bound="Context")
 
     def __init__(self, modulus: int) -> None:
         self.modulus = modulus
-
-    SelfType = TypeVar("SelfType", bound="Context")
 
     def copy(self: SelfType) -> SelfType:
         return type(self)(self.modulus)
@@ -60,11 +59,14 @@ def localcontext(ctx: Optional[Context] = None) -> "_ContextManager":
     return _ContextManager(ctx)
 
 
-class _ContextManager(object):
+class _ContextManager:
     """Context manager class to support localcontext().
     Sets a copy of the supplied context in __enter__() and restores
     the previous decimal context in __exit__()
     """
+
+    new_context: Context
+    saved_context: Context
 
     def __init__(self, new_context: Context):
         self.new_context = new_context.copy()
@@ -84,7 +86,7 @@ class _ContextManager(object):
         return False
 
 
-class BinaryPolynomial(object):
+class BinaryPolynomial:
     __slots__ = ("_value",)
     _value: int
 
@@ -182,7 +184,7 @@ class BinaryPolynomial(object):
     del SelfType
 
 
-class GFElement(object):
+class GFElement:
     __slots__ = "_value", "_modulus"
     _value: BinaryPolynomial
     _modulus: BinaryPolynomial
@@ -272,14 +274,13 @@ class GFElement(object):
         return type(self)(t, self._modulus)
 
     def __bool__(self) -> bool:
-        return bool(self._value % self._modulus)
+        return bool(self._value)
 
     def __str__(self) -> str:
         context = getcontext()
         if self._modulus == context.modulus:
             return f"GFElement({bin(int(self._value))})"
-        else:
-            return f"GFElement({bin(int(self._value))} over {bin(int(self._modulus))})"
+        return f"GFElement({bin(int(self._value))} over {bin(int(self._modulus))})"
 
     def __hash__(self) -> int:
         return hash(int(self))

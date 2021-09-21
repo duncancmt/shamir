@@ -9,7 +9,6 @@ print("actual:", bin(int(gf.BinaryPolynomial(a) * gf.BinaryPolynomial(b))))
 ##
 
 context = gf.getcontext()
-context.bit_length = 8
 context.modulus = 0b100011011
 
 ###
@@ -44,10 +43,10 @@ print(bin(int((actual * a)._value)))
 
 inverses = set()
 for i in range(1, 256):
-    i = gf.GFElement(i)
-    i_inverse = ~i
-    inverses.add(i_inverse)
+    i_inverse = ~gf.GFElement(i)
+    inverses.add(int(i_inverse))
     assert i * i_inverse == 1
 assert len(inverses) == 255
+assert inverses == set(range(1, 256))
 
 print("exhaustive test of AES modulus passed")
