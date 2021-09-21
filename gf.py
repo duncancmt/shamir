@@ -184,14 +184,14 @@ class Element(object):
         value: Union[BinaryPolynomial, int],
         modulus: Union[BinaryPolynomial, int, None] = None,
     ) -> None:
-        if isinstance(value, int):
-            value = BinaryPolynomial(value)
-        self._value = value
         if modulus is None:
             modulus = getcontext().modulus
         if isinstance(modulus, int):
             modulus = BinaryPolynomial(modulus)
         self._modulus = modulus
+        if isinstance(value, int):
+            value = BinaryPolynomial(value)
+        self._value = value % modulus
 
     def _coerce(
         self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
@@ -262,13 +262,8 @@ class Element(object):
             quotient = r // newr
             r, newr = newr, r - quotient * newr
             t, newt = newt, t - quotient * newt
-            print("quotient:", quotient)
-            print("r:", r, "newr:", newr)
-            print("t:", t, "newt:", newt)
-        # if r != 1:
-        #     raise RuntimeError("zero element or modulus is not irreducible")
-        # if t > modulus:
-        #     t = divmod(t, modulus)[1]
+        if r != 1:
+            raise ZeroDivisionError("zero element or modulus is not irreducible")
         return type(self)(t, self._modulus)
 
     def __bool__(self) -> bool:
