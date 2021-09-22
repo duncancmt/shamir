@@ -1,7 +1,6 @@
-import contextvars
 import secrets
 from types import TracebackType
-from typing import Literal, Optional, Tuple, Type, TypeVar, Union
+from typing import Literal, Optional, Tuple, Type, TypeVar, Union, Generic, overload
 
 _default_prim_poly = {
     #1024: (
@@ -24,97 +23,13 @@ _default_prim_poly = {
 }
 
 
-class Context:
-    """Stores the default modulus for newly-created field elements."""
 
-    modulus: int
-
-    SelfType = TypeVar("SelfType", bound="Context")
-
-    def __init__(self, modulus: int) -> None:
-        """Set the modulus."""
-        self.modulus = modulus
-
-    def copy(self: SelfType) -> SelfType:
-        """Return a copy with the same modulus."""
-        return type(self)(self.modulus)
-
-    del SelfType
-
-
-_current_context: contextvars.ContextVar[Context] = contextvars.ContextVar(
-    "gf_context"
-)
-
-
-# Don't contaminate the namespace
-del contextvars
-
-
-def getcontext() -> Context:
-    """Return this thread's context.
-
-    If this thread does not yet have a context, return a new context and set
-    this thread's context. New contexts have zero modulus, which is invalid.
-    """
-    try:
-        return _current_context.get()
-    except LookupError:
-        context = Context(0)
-        _current_context.set(context)
-        return context
-
-
-def setcontext(context: Context) -> None:
-    """Set this thread's context to context."""
-    _current_context.set(context)
-
-
-def localcontext(ctx: Optional[Context] = None) -> "_ContextManager":
-    """Return a context manager that swaps the current context for the given context."""
-    if ctx is None:
-        ctx = getcontext()
-    return _ContextManager(ctx)
-
-
-def setfield(bit_length: int) -> None:
-    """Set the modulus to the default for the given bit length."""
+def get_modulus(bit_length: int) -> BinaryPolynomial:
+    """Get the default modulus for the given bit length."""
     modulus = (1 << bit_length) | 1
     for i in _default_prim_poly[bit_length]:
         modulus |= 1 << i
-    ctx = Context(modulus)
-    setcontext(ctx)
-
-
-class _ContextManager:
-    """Context manager class to support localcontext().
-
-    Sets a copy of the supplied context in __enter__() and restores the previous
-    decimal context in __exit__()
-    """
-
-    new_context: Context
-    saved_context: Context
-
-    def __init__(self, new_context: Context):
-        """Set the to-be-installed context."""
-        self.new_context = new_context.copy()
-
-    def __enter__(self) -> Context:
-        """Install the context and return."""
-        self.saved_context = getcontext()
-        setcontext(self.new_context)
-        return self.new_context
-
-    def __exit__(
-        self,
-        exctype: Optional[Type[BaseException]],
-        excinst: Optional[BaseException],
-        exctb: Optional[TracebackType],
-    ) -> Literal[False]:
-        """Restore the original context and propagate exceptions."""
-        setcontext(self.saved_context)
-        return False
+    return BinaryPolynomial(modulus)
 
 
 class BinaryPolynomial:
@@ -236,45 +151,56 @@ class BinaryPolynomial:
 
     del SelfType
 
+PolynomialType = TypeVar("PolynomialType", bound=BinaryPolynomial)
 
-class GFElement:
+class GFElement(Generic[PolynomialType]):
     __slots__ = "_value", "_modulus"
-    _value: BinaryPolynomial
-    _modulus: BinaryPolynomial
+    _value: PolynomialType
+    _modulus: PolynomialType
 
-    SelfType = TypeVar("SelfType", bound="GFElement")
+    SelfType = TypeVar("SelfType", bound="GFElement[PolynomialType]")
+
+    @overload
+    def __init__(self, value: PolynomialType, modulus: Union[PolynomialType, int]) -> None:
+        ...
+
+    @overload
+    def __init__(self, value: int, modulus: PolynomialType) -> None:
+        ...
 
     def __init__(
         self,
-        value: Union[BinaryPolynomial, int],
-        modulus: Union[BinaryPolynomial, int, None] = None,
+        value: Union[PolynomialType, int],
+        modulus: Union[PolynomialType, int],
     ) -> None:
-        if modulus is None:
-            modulus = getcontext().modulus
         if isinstance(modulus, int):
-            modulus = BinaryPolynomial(modulus)
-        self._modulus = modulus
+            if isinstance(value, int):
+                raise TypeError("Unknown underlying PolynomialType")
+            modulus = type(value)(modulus)
         if isinstance(value, int):
-            value = BinaryPolynomial(value)
+            value = type(modulus)(value)
         self._value = value % modulus
+        self._modulus = modulus
 
     def _coerce(
-        self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
+        self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
-        if isinstance(other, (int, BinaryPolynomial)):
-            other = type(self)(other, self._modulus)
-        if self._modulus != other._modulus:
+        if isinstance(other, int):
+            return type(self)(type(self._value)(other), self._modulus)
+        if isinstance(other, type(self._value)):
+            return type(self)(other, self._modulus)
+        if self._modulus != other._modulus: # type: ignore # mypy fails to narrow
             raise ValueError("Different fields")
-        return other
+        return other # type: ignore # mypy fails to narrow
 
     def __add__(
-        self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
+        self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
         other = self._coerce(other)
         return type(self)(self._value + other._value, self._modulus)
 
     def __radd__(
-        self: SelfType, other: Union[BinaryPolynomial, int]
+        self: SelfType, other: Union[PolynomialType, int]
     ) -> SelfType:
         return type(self)(other, self._modulus) + self
 
@@ -282,47 +208,47 @@ class GFElement:
         return self
 
     def __sub__(
-        self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
+        self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
         return self + -other
 
     def __rsub__(
-        self: SelfType, other: Union[BinaryPolynomial, int]
+        self: SelfType, other: Union[PolynomialType, int]
     ) -> SelfType:
         return type(self)(other, self._modulus) - self
 
     def __mul__(
-        self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
+        self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
         other = self._coerce(other)
         return type(self)(self._value * other._value, self._modulus)
 
     def __rmul__(
-        self: SelfType, other: Union[BinaryPolynomial, int]
+        self: SelfType, other: Union[PolynomialType, int]
     ) -> SelfType:
         return type(self)(other, self._modulus) * self
 
     def __truediv__(
-        self: SelfType, other: Union[SelfType, BinaryPolynomial, int]
+        self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
         other = self._coerce(other)
         return self * ~other
 
     def __rtruediv__(
-        self: SelfType, other: Union[BinaryPolynomial, int]
+        self: SelfType, other: Union[PolynomialType, int]
     ) -> SelfType:
         return type(self)(other, self._modulus) / self
 
     def __invert__(self: SelfType) -> SelfType:
-        t: Union[BinaryPolynomial, int] = 0
-        t_new: Union[BinaryPolynomial, int] = 1
+        t: Union[PolynomialType, int] = 0
+        t_new: Union[PolynomialType, int] = 1
         r = self._modulus
         r_new = self._value
         while r_new:
             quotient = r // r_new
             r, r_new = r_new, r - quotient * r_new
             t, t_new = t_new, t - quotient * t_new
-        if r != 1:
+        if r != 1: # type: ignore # mypy strict-equality gives a false-positive
             raise ZeroDivisionError("zero element or modulus is reducible")
         return type(self)(t, self._modulus)
 
@@ -330,9 +256,6 @@ class GFElement:
         return bool(self._value)
 
     def __str__(self) -> str:
-        context = getcontext()
-        if self._modulus == context.modulus:
-            return f"{type(self).__name__}({bin(int(self._value))})"
         return f"{type(self).__name__}({bin(int(self._value))}, {bin(int(self._modulus))})"
 
     def __hash__(self) -> int:
@@ -342,7 +265,9 @@ class GFElement:
         return int(self._value)
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, (BinaryPolynomial, int)):
+        if isinstance(other, int):
+            other = type(self._value)(other)
+        if isinstance(other, type(self._value)):
             other = type(self)(other, self._modulus)
         if (
             isinstance(other, GFElement)
@@ -355,9 +280,8 @@ class GFElement:
     del SelfType
 
 
-def random() -> GFElement:
-    modulus = getcontext().modulus
-    value = secrets.randbits(modulus.bit_length() - 1)
+def random(modulus: BinaryPolynomial) -> GFElement[BinaryPolynomial]:
+    value = secrets.randbits(modulus._value.bit_length() - 1)
     return GFElement(value, modulus)
 
 
