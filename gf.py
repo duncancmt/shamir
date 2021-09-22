@@ -4,10 +4,22 @@ from types import TracebackType
 from typing import Literal, Optional, Tuple, Type, TypeVar, Union
 
 _default_prim_poly = {
+    #1024: (
+    #896: (
+    #768: (
+    640: (14, 3, 2),
+    512: (8, 5, 2),
+    448: (11, 6, 4),
+    384: (16, 15, 6),
+    320: (4, 3, 1),
     256: (10, 5, 2),
     224: (12, 7, 2),
     192: (15, 11, 5),
+    160: (5, 3, 2),
     128: (7, 2, 1),
+    64: (4, 3, 1), # for testing
+    32: (7, 6, 2), # for testing
+    16: (5, 3, 2), # for testing
     8: (4, 3, 1),  # Rijndael modulus, for testing
 }
 

@@ -59,14 +59,13 @@ class TestGFElementInvert1(unittest.TestCase):
 
 class TestGFElementInvertExhaustive(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(8)
-        self.expected = frozenset(range(1, 256))
+        gf.setfield(16)
 
     def test_invert_exhaustive(self) -> None:
         inverses = set()
-        for i in range(1, 256):
+        for i in range(1, 1<<16):
             with self.subTest(i=i):
                 inverse = ~gf.GFElement(i)
+                self.assertNotIn(inverse, inverses)
                 inverses.add(inverse)
                 self.assertEqual(int(i * inverse), 1)
-        self.assertEqual(inverses, self.expected)
