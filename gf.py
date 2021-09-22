@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import secrets
 from types import TracebackType
-from typing import Literal, Optional, Tuple, Type, TypeVar, Union, Generic, overload
+from typing import Literal, Optional, Type, TypeVar, Union, Generic, overload
 
 _default_prim_poly = {
     #1024: (
@@ -38,7 +40,7 @@ class BinaryPolynomial:
     __slots__ = ("_value",)
     _value: int
 
-    SelfType = TypeVar("SelfType", bound="BinaryPolynomial")
+    SelfType = TypeVar("SelfType", bound=BinaryPolynomial)
 
     def __init__(self, value: int) -> None:
         """Set the underlying bit-field representation, ensuring that it's positive."""
@@ -92,7 +94,7 @@ class BinaryPolynomial:
 
     def __divmod__(
         self: SelfType, other: Union[SelfType, int]
-    ) -> Tuple[SelfType, SelfType]:
+    ) -> tuple[SelfType, SelfType]:
         other = self._coerce(other)
         numerator = self._value
         denominator = other._value
@@ -106,7 +108,7 @@ class BinaryPolynomial:
             remainder ^= denominator << shift
         return type(self)(quotient), type(self)(remainder)
 
-    def __rdivmod__(self: SelfType, other: int) -> Tuple[SelfType, SelfType]:
+    def __rdivmod__(self: SelfType, other: int) -> tuple[SelfType, SelfType]:
         return divmod(type(self)(other), self)
 
     def __floordiv__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
@@ -158,7 +160,7 @@ class GFElement(Generic[PolynomialType]):
     _value: PolynomialType
     _modulus: PolynomialType
 
-    SelfType = TypeVar("SelfType", bound="GFElement[PolynomialType]")
+    SelfType = TypeVar("SelfType", bound=GFElement[PolynomialType])
 
     @overload
     def __init__(self, value: PolynomialType, modulus: Union[PolynomialType, int]) -> None:
