@@ -40,7 +40,7 @@ class BinaryPolynomial:
     __slots__ = ("_value",)
     _value: int
 
-    SelfType = TypeVar("SelfType", bound=BinaryPolynomial)
+    SelfType = TypeVar("SelfType", bound="BinaryPolynomial")
 
     def __init__(self, value: int) -> None:
         """Set the underlying bit-field representation, ensuring that it's positive."""
@@ -172,7 +172,7 @@ class GFElement(Generic[PolynomialType]):
     _value: PolynomialType
     _modulus: PolynomialType
 
-    SelfType = TypeVar("SelfType", bound=GFElement[PolynomialType])
+    SelfType = TypeVar("SelfType", bound="GFElement[PolynomialType]")
 
     @overload
     def __init__(self, value: PolynomialType, modulus: Union[PolynomialType, int]) -> None:

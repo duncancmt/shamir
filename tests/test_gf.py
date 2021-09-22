@@ -5,7 +5,6 @@ import gf
 
 class TestBinaryPolynomialMul(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(8)
         self.a = gf.BinaryPolynomial(0b00110001)
         self.b = gf.BinaryPolynomial(0b00000110)
         self.expected = 0b10100110
@@ -16,21 +15,21 @@ class TestBinaryPolynomialMul(unittest.TestCase):
 
 class TestBinaryPolynomialDivMod(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(8)
         self.a = gf.BinaryPolynomial(0b11100010110001)
+        self.modulus = gf.get_modulus(8)
         self.expected = 0b00111010, 0b10001111
 
     def test_divmod(self) -> None:
-        quotient, remainder = divmod(self.a, gf.getcontext().modulus)
+        quotient, remainder = divmod(self.a, self.modulus)
         self.assertEqual(int(quotient), self.expected[0])
         self.assertEqual(int(remainder), self.expected[1])
 
 
 class TestGFElementMul(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(8)
-        self.a = gf.GFElement(0b110001)
-        self.b = gf.GFElement(0b110)
+        modulus = gf.get_modulus(8)
+        self.a = gf.GFElement(0b110001, modulus)
+        self.b = gf.GFElement(0b110, modulus)
         self.expected = 0b10100110
 
     def test_mul(self) -> None:
@@ -39,8 +38,8 @@ class TestGFElementMul(unittest.TestCase):
 
 class TestGFElementInvert0(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(8)
-        self.a = gf.GFElement(0b1010011)
+        modulus = gf.get_modulus(8)
+        self.a = gf.GFElement(0b1010011, modulus)
         self.expected = 0b11001010
 
     def test_invert(self) -> None:
@@ -49,8 +48,8 @@ class TestGFElementInvert0(unittest.TestCase):
 
 class TestGFElementInvert1(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(8)
-        self.a = gf.GFElement(0b110011)
+        modulus = gf.get_modulus(8)
+        self.a = gf.GFElement(0b110011, modulus)
         self.expected = 0b1101100
 
     def test_invert(self) -> None:
@@ -59,13 +58,13 @@ class TestGFElementInvert1(unittest.TestCase):
 
 class TestGFElementInvertExhaustive(unittest.TestCase):
     def setUp(self) -> None:
-        gf.setfield(16)
+        self.modulus = gf.get_modulus(16)
 
     def test_invert_exhaustive(self) -> None:
-        inverses = set()
+        inverses: set[int] = set()
         for i in range(1, 1<<16):
             with self.subTest(i=i):
-                inverse = ~gf.GFElement(i)
-                self.assertNotIn(inverse, inverses)
-                inverses.add(inverse)
+                inverse = ~gf.GFElement(i, self.modulus)
+                self.assertNotIn(int(inverse), inverses)
+                inverses.add(int(inverse))
                 self.assertEqual(int(i * inverse), 1)
