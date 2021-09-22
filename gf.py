@@ -78,6 +78,7 @@ def localcontext(ctx: Optional[Context] = None) -> "_ContextManager":
 
 
 def setfield(bit_length: int) -> None:
+    """Set the modulus to the default for the given bit length."""
     modulus = (1 << bit_length) | 1
     for i in _default_prim_poly[bit_length]:
         modulus |= 1 << i
@@ -87,17 +88,20 @@ def setfield(bit_length: int) -> None:
 
 class _ContextManager:
     """Context manager class to support localcontext().
-    Sets a copy of the supplied context in __enter__() and restores
-    the previous decimal context in __exit__()
+
+    Sets a copy of the supplied context in __enter__() and restores the previous
+    decimal context in __exit__()
     """
 
     new_context: Context
     saved_context: Context
 
     def __init__(self, new_context: Context):
+        """Set the to-be-installed context."""
         self.new_context = new_context.copy()
 
     def __enter__(self) -> Context:
+        """Install the context and return."""
         self.saved_context = getcontext()
         setcontext(self.new_context)
         return self.new_context
@@ -108,43 +112,54 @@ class _ContextManager:
         excinst: Optional[BaseException],
         exctb: Optional[TracebackType],
     ) -> Literal[False]:
+        """Restore the original context and propagate exceptions."""
         setcontext(self.saved_context)
         return False
 
 
 class BinaryPolynomial:
+    """Represents a polynomial over GF(2)."""
+
     __slots__ = ("_value",)
     _value: int
 
     SelfType = TypeVar("SelfType", bound="BinaryPolynomial")
 
     def __init__(self, value: int) -> None:
+        """Set the underlying bit-field representation, ensuring that it's positive."""
         if value < 0:
             value = -value
         self._value = value
 
     def _coerce(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+        """Coerce an possibly-integer to a BinaryPolynomial."""
         if isinstance(other, int):
             return type(self)(other)
         return other
 
     def __add__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+        """Addition of polynomials over GF(2)."""
         other = self._coerce(other)
         return type(self)(self._value ^ other._value)
 
     def __radd__(self: SelfType, other: int) -> SelfType:
+        """Addition of polynomials over GF(2). Coerce integers."""
         return type(self)(other) + self
 
     def __neg__(self: SelfType) -> SelfType:
+        """Negation of polynomials over GF(2) is the identity."""
         return self
 
     def __sub__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+        """Subtraction of polynomials over GF(2) is addition."""
         return self + -other
 
     def __rsub__(self: SelfType, other: int) -> SelfType:
+        """Subtraction of polynomials over GF(2) is addition. Coerce integers."""
         return type(self)(other) - self
 
     def __mul__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+        """Multiplication of polynomials over GF(2)."""
         other = self._coerce(other)
         a = self._value
         b = other._value
@@ -157,6 +172,7 @@ class BinaryPolynomial:
         return type(self)(p)
 
     def __rmul__(self: SelfType, other: int) -> SelfType:
+        """Multiplication of polynomials over GF(2). Coerce integers."""
         return type(self)(other) * self
 
     def __divmod__(
@@ -179,30 +195,39 @@ class BinaryPolynomial:
         return divmod(type(self)(other), self)
 
     def __floordiv__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+        """Quotient after division of polynomials over GF(2)."""
         return divmod(self, other)[0]
 
     def __rfloordiv__(self: SelfType, other: int) -> SelfType:
+        """Quotient after division of polynomials over GF(2). Coerce integers."""
         return type(self)(other) // self
 
     def __mod__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+        """Remainder after division of polynomials over GF(2)."""
         return divmod(self, other)[1]
 
     def __rmod__(self: SelfType, other: int) -> SelfType:
+        """Remainder after division of polynomials over GF(2). Coerce integers."""
         return type(self)(other) % self
 
     def __int__(self) -> int:
+        """Raw bit-field representation of the binary polynomial."""
         return self._value
 
     def __bool__(self) -> bool:
+        """Nonzero-ness of the binary polynomial."""
         return bool(int(self))
 
     def __str__(self) -> str:
+        """Human-readable representation of the binary polynomial."""
         return f"{type(self).__name__}({bin(int(self))})"
 
     def __hash__(self) -> int:
+        """BinaryPolynomial hashes the same as int."""
         return hash(int(self))
 
     def __eq__(self, other: object) -> bool:
+        """BinaryPolynomials are equal if their bit-fields are equal."""
         if isinstance(other, int):
             other = type(self)(other)
         if isinstance(other, BinaryPolynomial) and self._value == other._value:
