@@ -142,7 +142,7 @@ class BinaryPolynomial:
         return self + -other
 
     def __rsub__(self: SelfType, other: int) -> SelfType:
-        return type(self)(other) + -self
+        return type(self)(other) - self
 
     def __mul__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
         other = self._coerce(other)
@@ -165,9 +165,11 @@ class BinaryPolynomial:
         other = self._coerce(other)
         numerator = self._value
         denominator = other._value
+        if denominator == 0:
+            raise ZeroDivisionError("division by zero")
         quotient = 0
         remainder = numerator
-        while remainder and remainder.bit_length() >= denominator.bit_length():
+        while remainder.bit_length() >= denominator.bit_length():
             shift = remainder.bit_length() - denominator.bit_length()
             quotient ^= 1 << shift
             remainder ^= denominator << shift
@@ -195,7 +197,7 @@ class BinaryPolynomial:
         return bool(int(self))
 
     def __str__(self) -> str:
-        return f"BinaryPolynomial({bin(int(self))})"
+        return f"{type(self).__name__}({bin(int(self))})"
 
     def __hash__(self) -> int:
         return hash(int(self))
@@ -305,8 +307,8 @@ class GFElement:
     def __str__(self) -> str:
         context = getcontext()
         if self._modulus == context.modulus:
-            return f"GFElement({bin(int(self._value))})"
-        return f"GFElement({bin(int(self._value))} over {bin(int(self._modulus))})"
+            return f"{type(self).__name__}({bin(int(self._value))})"
+        return f"{type(self).__name__}({bin(int(self._value))}, {bin(int(self._modulus))})"
 
     def __hash__(self) -> int:
         return hash(int(self))
