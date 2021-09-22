@@ -7,7 +7,7 @@ from typing import Literal, Optional, Type, TypeVar, Union, Generic, overload
 _default_prim_poly = {
     #1024: (
     #896: (
-    #768: (
+    768: (19, 17, 4),
     640: (14, 3, 2),
     512: (8, 5, 2),
     448: (11, 6, 4),
@@ -127,6 +127,16 @@ class BinaryPolynomial:
         """Remainder after division of polynomials over GF(2). Coerce integers."""
         return type(self)(other) % self
 
+    def __pow__(self: SelfType, other: int) -> SelfType:
+        shifted = self
+        result = type(self)(1)
+        while other:
+            if other & 1:
+                result *= shifted
+            other >>= 1
+            shifted *= shifted
+        return result
+
     def __int__(self) -> int:
         """Raw bit-field representation of the binary polynomial."""
         return self._value
@@ -138,6 +148,8 @@ class BinaryPolynomial:
     def __str__(self) -> str:
         """Human-readable representation of the binary polynomial."""
         return f"{type(self).__name__}({bin(int(self))})"
+
+    __repr__ = __str__
 
     def __hash__(self) -> int:
         """BinaryPolynomial hashes the same as int."""
@@ -254,17 +266,30 @@ class GFElement(Generic[PolynomialType]):
             raise ZeroDivisionError("zero element or modulus is reducible")
         return type(self)(t, self._modulus)
 
+    def __pow__(self: SelfType, other: int) -> SelfType:
+        shifted = self
+        result = type(self)(1, self._modulus)
+        while other:
+            if other & 1:
+                result *= shifted
+            other >>= 1
+            shifted *= shifted
+        return result
+
+    def __int__(self) -> int:
+        return int(self._value)
+
     def __bool__(self) -> bool:
         return bool(self._value)
 
     def __str__(self) -> str:
         return f"{type(self).__name__}({bin(int(self._value))}, {bin(int(self._modulus))})"
 
+    __repr__ = __str__
+
+
     def __hash__(self) -> int:
         return hash(int(self))
-
-    def __int__(self) -> int:
-        return int(self._value)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, int):
