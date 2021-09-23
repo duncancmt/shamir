@@ -21,7 +21,7 @@
 -    //   Sweep through the number from right to left, propagating carries.  Skip
 -    //   the constant and the nth degree terms.
 -    for (int digit_num = 0 ;  digit_num <= n_ - 2 ;  ++digit_num)
-+    for (size_t i = 0 ;  i < 5 ;  i++)
++    for (size_t i = 1 ;  i < 5 ;  i++)
      {
 -        if (f_[ digit_num ] == p_)   //  Propagate carry to next digit.
 +        for (size_t j = i ;  j < n_ - 1 ;  j++)
