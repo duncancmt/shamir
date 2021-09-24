@@ -48,7 +48,7 @@ class BinaryPolynomial:
             value = -value
         self._value = value
 
-    def _coerce(self: SelfType, other: Union[SelfType, int]) -> SelfType:
+    def coerce(self: SelfType, other: Union[SelfType, int]) -> SelfType:
         """Coerce an possibly-integer to a BinaryPolynomial."""
         if isinstance(other, int):
             return type(self)(other)
@@ -56,7 +56,7 @@ class BinaryPolynomial:
 
     def __add__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
         """Addition of polynomials over GF(2)."""
-        other = self._coerce(other)
+        other = self.coerce(other)
         return type(self)(self._value ^ other._value)
 
     def __radd__(self: SelfType, other: int) -> SelfType:
@@ -77,7 +77,7 @@ class BinaryPolynomial:
 
     def __mul__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
         """Multiplication of polynomials over GF(2)."""
-        other = self._coerce(other)
+        other = self.coerce(other)
         a = self._value
         b = other._value
         p = 0
@@ -95,7 +95,7 @@ class BinaryPolynomial:
     def __divmod__(
         self: SelfType, other: Union[SelfType, int]
     ) -> tuple[SelfType, SelfType]:
-        other = self._coerce(other)
+        other = self.coerce(other)
         numerator = self._value
         denominator = other._value
         if denominator == 0:
@@ -196,19 +196,19 @@ class GFElement(Generic[PolynomialType]):
         self._value = value % modulus
         self._modulus = modulus
 
-    def _coerce(
+    def coerce(
         self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
         if isinstance(other, (int, self.polynomial_type)):
-            return type(self)(self._value._coerce(other), self._modulus)
-        if self._modulus != self._modulus._coerce(other._modulus): # type: ignore # mypy fails to narrow
+            return type(self)(self._value.coerce(other), self._modulus)
+        if self._modulus != self._modulus.coerce(other._modulus): # type: ignore # mypy fails to narrow
             raise ValueError("Different fields")
-        return type(self)(self._value._coerce(other._value), self._modulus)
+        return type(self)(self._value.coerce(other._value), self._modulus)
 
     def __add__(
         self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
-        other = self._coerce(other)
+        other = self.coerce(other)
         return type(self)(self._value + other._value, self._modulus)
 
     def __radd__(
@@ -232,7 +232,7 @@ class GFElement(Generic[PolynomialType]):
     def __mul__(
         self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
-        other = self._coerce(other)
+        other = self.coerce(other)
         return type(self)(self._value * other._value, self._modulus)
 
     def __rmul__(
@@ -243,7 +243,7 @@ class GFElement(Generic[PolynomialType]):
     def __truediv__(
         self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
-        other = self._coerce(other)
+        other = self.coerce(other)
         return self * ~other
 
     def __rtruediv__(
@@ -291,7 +291,7 @@ class GFElement(Generic[PolynomialType]):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, (int, self.polynomial_type)):
-            other = type(self)(self._value._coerce(other), self._modulus)
+            other = type(self)(self._value.coerce(other), self._modulus)
         if (
             isinstance(other, GFElement)
             and self._value == other._value
@@ -317,11 +317,7 @@ def random(modulus: BinaryPolynomial) -> GFElement[BinaryPolynomial]:
 
 
 __all__ = [
-    "Context",
-    "getcontext",
-    "setcontext",
-    "localcontext",
-    "setfield",
+    "get_modulus",
     "BinaryPolynomial",
     "GFElement",
     "random",
