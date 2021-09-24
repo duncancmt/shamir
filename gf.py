@@ -360,16 +360,8 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     del SelfType
 
 
-def random(
-    modulus: BinaryPolynomial,
-) -> ModularBinaryPolynomial[BinaryPolynomial]:
-    value = secrets.randbits(modulus._value.bit_length() - 1)
-    return ModularBinaryPolynomial(value, modulus)
-
-
 __all__ = [
     "get_modulus",
     "BinaryPolynomial",
     "ModularBinaryPolynomial",
-    "random",
 ]
