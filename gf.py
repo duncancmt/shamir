@@ -5,8 +5,8 @@ from types import TracebackType
 from typing import Literal, Optional, Type, TypeVar, Union, Generic, overload
 
 _default_prim_poly = {
-    #1024: (
-    #896: (
+    1024: (23, 22, 9)
+    896: (23, 21, 16),
     768: (19, 17, 4),
     640: (14, 3, 2),
     512: (8, 5, 2),
@@ -21,7 +21,7 @@ _default_prim_poly = {
     64: (4, 3, 1), # for testing
     32: (7, 6, 2), # for testing
     16: (5, 3, 2), # for testing
-    8: (4, 3, 1),  # Rijndael modulus, for testing
+    8: (4, 3, 1),  # Rijndael/AES modulus, for testing
 }
 
 

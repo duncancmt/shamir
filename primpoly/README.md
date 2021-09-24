@@ -6,16 +6,4 @@ version 3 or later. The terms of this license are provided as gpl-3.0.txt. The
 modification required to generate the smallest 5-term primitive polynomial (no 
 3-term polynomials exist of the supported orders) is provided as primpoly.patch.
 
-The computed polynomials are:
-
-x ^ 256 + x ^ 10 + x ^ 5 + x ^ 2 + 1
-
-x ^ 224 + x ^ 12 + x ^ 7 + x ^ 2 + 1
-
-x ^ 192 + x ^ 15 + x ^ 11 + x ^ 5 + 1
-
-x ^ 160 + x ^ 5 + x ^ 3 + x ^ 2 + 1
-
-x ^ 128 + x ^ 7 + x ^ 2 + x + 1
-
 The distribution site for Primpoly is http://seanerikoconnor.freeservers.com/Mathematics/AbstractAlgebra/PrimitivePolynomials/overview.html
