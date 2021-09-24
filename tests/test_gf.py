@@ -25,38 +25,38 @@ class TestBinaryPolynomialDivMod(unittest.TestCase):
         self.assertEqual(int(remainder), self.expected[1])
 
 
-class TestGFElementMul(unittest.TestCase):
+class TestModularBinaryPolynomialMul(unittest.TestCase):
     def setUp(self) -> None:
         modulus = gf.get_modulus(8)
-        self.a = gf.GFElement(0b110001, modulus)
-        self.b = gf.GFElement(0b110, modulus)
+        self.a = gf.ModularBinaryPolynomial(0b110001, modulus)
+        self.b = gf.ModularBinaryPolynomial(0b110, modulus)
         self.expected = 0b10100110
 
     def test_mul(self) -> None:
         self.assertEqual(int(self.a * self.b), self.expected)
 
 
-class TestGFElementInvert0(unittest.TestCase):
+class TestModularBinaryPolynomialInvert0(unittest.TestCase):
     def setUp(self) -> None:
         modulus = gf.get_modulus(8)
-        self.a = gf.GFElement(0b1010011, modulus)
+        self.a = gf.ModularBinaryPolynomial(0b1010011, modulus)
         self.expected = 0b11001010
 
     def test_invert(self) -> None:
         self.assertEqual(int(~self.a), self.expected)
 
 
-class TestGFElementInvert1(unittest.TestCase):
+class TestModularBinaryPolynomialInvert1(unittest.TestCase):
     def setUp(self) -> None:
         modulus = gf.get_modulus(8)
-        self.a = gf.GFElement(0b110011, modulus)
+        self.a = gf.ModularBinaryPolynomial(0b110011, modulus)
         self.expected = 0b1101100
 
     def test_invert(self) -> None:
         self.assertEqual(int(~self.a), self.expected)
 
 
-class TestGFElementInvertExhaustive(unittest.TestCase):
+class TestModularBinaryPolynomialInvertExhaustive(unittest.TestCase):
     def setUp(self) -> None:
         self.modulus = gf.get_modulus(16)
 
@@ -64,7 +64,7 @@ class TestGFElementInvertExhaustive(unittest.TestCase):
         inverses: set[int] = set()
         for i in range(1, 1 << 16):
             with self.subTest(i=i):
-                inverse = ~gf.GFElement(i, self.modulus)
+                inverse = ~gf.ModularBinaryPolynomial(i, self.modulus)
                 inverse_int = int(inverse)
                 self.assertIn(inverse_int, range(1, 1 << 16))
                 self.assertNotIn(inverse_int, inverses)
