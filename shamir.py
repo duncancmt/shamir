@@ -20,19 +20,13 @@ def split(secret: GFE, n: int, k: int) -> list[tuple[GFE, GFE]]:
 
 def recover(shares: Iterable[tuple[GFE, GFE]]) -> GFE:
     result: GFE
-    accum: GFE
-    for x_i, y_i in shares:
+    for x_i, accum in shares:
         for x_j, _ in shares:
             if x_j == x_i:
                 continue
-            term = x_j / (x_j - x_i)
-            try:
-                accum *= term
-            except NameError:
-                accum = y_i * term
+            accum *= x_j / (x_j - x_i)
         try:
             result += accum
         except NameError:
             result = accum
-        del accum
     return result
