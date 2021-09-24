@@ -1,9 +1,9 @@
-import unittest
 import random
 import secrets
+import unittest
 
-import shamir
 import gf
+import shamir
 
 
 class TestShamir(unittest.TestCase):

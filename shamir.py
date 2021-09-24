@@ -1,8 +1,9 @@
-from typing import TypeVar
-from collections.abc import Iterable, Iterator
 import hashlib
-import gf
 import itertools
+from collections.abc import Iterable, Iterator
+from typing import TypeVar
+
+import gf
 
 T = TypeVar("T")
 

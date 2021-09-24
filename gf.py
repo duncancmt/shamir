@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import secrets
 from types import TracebackType
-from typing import Literal, Optional, Type, TypeVar, Union, Generic, overload
+from typing import Generic, Literal, Optional, Type, TypeVar, Union, overload
 
 _default_prim_poly = {
     1024: (23, 22, 9),
