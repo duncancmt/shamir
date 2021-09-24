@@ -161,7 +161,7 @@ class BinaryPolynomial:
         return int(self).bit_length()
 
     def __len__(self) -> int:
-        return (self.bit_length() - 1) // 8 + 1
+        return (self.bit_length() + 7) // 8
 
     def __bytes__(self) -> bytes:
         if not self:
@@ -316,7 +316,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return self.modulus.bit_length() - 1
 
     def __len__(self) -> int:
-        return (self.bit_length() - 1) // 8 + 1
+        return (self.bit_length() + 7) // 8
 
     def __bytes__(self) -> bytes:
         # TODO: this is different from bytes(self._value) add unit test to demonstrate

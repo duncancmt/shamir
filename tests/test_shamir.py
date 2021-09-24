@@ -22,6 +22,7 @@ class TestShamir(unittest.TestCase):
                 shares = shamir.split(
                     self.secret, self.n, self.k, self.version
                 )
+                self.assertEqual(len(shares), self.n)
                 shares = random.sample(shares, self.k)
                 recovered = shamir.recover(shares, self.version)
                 self.assertEqual(int(recovered), int(self.secret))

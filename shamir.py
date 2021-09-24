@@ -17,26 +17,25 @@ GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 def random_elements(
-    secret: GFE, how_many: int, version: int = 0
+    secret: GFE, k: int, how_many: int, version: int = 0
 ) -> Iterator[GFE]:
-    byte_length, remainder = divmod(secret.bit_length(), 8)
-    assert remainder == 0
     h = hashlib.shake_256()
     h.update(
         bytes(secret)
         + bytes(secret.modulus)
-        + version.to_bytes((version.bit_length() - 1) // 8 + 1, "little")
+        + k.to_bytes((k.bit_length() + 7) // 8, "little")
+        + version.to_bytes((version.bit_length() + 7) // 8, "little")
     )
     return iter(
         secret.coerce(int.from_bytes(x, "little"))
-        for x in grouper(h.digest(byte_length * how_many), byte_length)
+        for x in grouper(h.digest(len(secret) * how_many), len(secret))
     )
 
 
 def split(
     secret: GFE, n: int, k: int, version: int = 0
 ) -> list[tuple[int, GFE, GFE]]:
-    noise = random_elements(secret, n + k - 1, version)
+    noise = random_elements(secret, k, n + k - 1, version)
     # from high degree to low degree
     coeffs = tuple(itertools.islice(noise, k - 1)) + (secret,)
     result: list[tuple[int, GFE, GFE]] = []
@@ -51,10 +50,11 @@ def split(
 
 def recover(shares: Iterable[tuple[int, GFE, GFE]], version: int = 0) -> GFE:
     result: GFE
-    shares = tuple(shares)
     n = 0
+    k = 0
     for i, x_i, accum in shares:
         n = max(i, n)
+        k += 1
         for j, x_j, _ in shares:
             if j == i:
                 continue
@@ -63,7 +63,7 @@ def recover(shares: Iterable[tuple[int, GFE, GFE]], version: int = 0) -> GFE:
             result += accum
         except NameError:
             result = accum
-    original_shares = frozenset(split(result, n, len(shares), version))
+    original_shares = frozenset(split(result, n, k, version))
     for i in shares:
         assert i in original_shares
     return result
