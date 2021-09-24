@@ -52,7 +52,7 @@ class BinaryPolynomial:
         """Coerce an possibly-integer to a BinaryPolynomial."""
         if isinstance(other, int):
             return type(self)(other)
-        return other
+        return type(self)(other._value)
 
     def __add__(self: SelfType, other: Union[SelfType, int]) -> SelfType:
         """Addition of polynomials over GF(2)."""
@@ -199,13 +199,11 @@ class GFElement(Generic[PolynomialType]):
     def _coerce(
         self: SelfType, other: Union[SelfType, PolynomialType, int]
     ) -> SelfType:
-        if isinstance(other, int):
-            return type(self)(type(self._value)(other), self._modulus)
-        if isinstance(other, type(self._value)):
-            return type(self)(other, self._modulus)
-        if self._modulus != other._modulus: # type: ignore # mypy fails to narrow
+        if isinstance(other, (int, self.polynomial_type)):
+            return type(self)(self._value._coerce(other), self._modulus)
+        if self._modulus != self._modulus._coerce(other._modulus): # type: ignore # mypy fails to narrow
             raise ValueError("Different fields")
-        return other # type: ignore # mypy fails to narrow
+        return type(self)(self._value._coerce(other._value), self._modulus)
 
     def __add__(
         self: SelfType, other: Union[SelfType, PolynomialType, int]
@@ -292,10 +290,8 @@ class GFElement(Generic[PolynomialType]):
         return hash(int(self))
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, int):
-            other = type(self._value)(other)
-        if isinstance(other, type(self._value)):
-            other = type(self)(other, self._modulus)
+        if isinstance(other, (int, self.polynomial_type)):
+            other = type(self)(self._value._coerce(other), self._modulus)
         if (
             isinstance(other, GFElement)
             and self._value == other._value
@@ -303,6 +299,14 @@ class GFElement(Generic[PolynomialType]):
         ):
             return True
         return NotImplemented
+
+    @property
+    def modulus(self) -> PolynomialType:
+        return self._modulus
+
+    @property
+    def polynomial_type(self) -> Type[PolynomialType]:
+        return type(self._value)
 
     del SelfType
 
