@@ -65,6 +65,8 @@ class TestGFElementInvertExhaustive(unittest.TestCase):
         for i in range(1, 1<<16):
             with self.subTest(i=i):
                 inverse = ~gf.GFElement(i, self.modulus)
-                self.assertNotIn(int(inverse), inverses)
-                inverses.add(int(inverse))
+                inverse_int = int(inverse)
+                self.assertIn(inverse_int, range(1, 1<<16))
+                self.assertNotIn(inverse_int, inverses)
+                inverses.add(inverse_int)
                 self.assertEqual(int(i * inverse), 1)
