@@ -9,12 +9,12 @@ def split(secret: GFE, n: int, k: int) -> list[tuple[GFE, GFE]]:
     # from high degree to low degree
     coeffs = tuple(gf.random(secret.modulus) for _ in range(k - 1)) + (secret,)
     result: list[tuple[GFE, GFE]] = []
-    for i in range(1, n + 1):
+    for i in map(secret.coerce, range(1, n + 1)):
         accum = secret.coerce(0)
         for coeff in coeffs:
             accum *= i
             accum += coeff
-        result.append((secret.coerce(i), accum))
+        result.append((i, accum))
     return result
 
 
