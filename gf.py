@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import Literal, Optional, Type, TypeVar, Union, Generic, overload
 
 _default_prim_poly = {
-    1024: (23, 22, 9)
+    1024: (23, 22, 9),
     896: (23, 21, 16),
     768: (19, 17, 4),
     640: (14, 3, 2),
