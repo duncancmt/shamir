@@ -167,12 +167,12 @@ class BinaryPolynomial:
 
 PolynomialType = TypeVar("PolynomialType", bound=BinaryPolynomial)
 
-class GFElement(Generic[PolynomialType]):
+class ModularBinaryPolynomial(Generic[PolynomialType]):
     __slots__ = "_value", "_modulus"
     _value: PolynomialType
     _modulus: PolynomialType
 
-    SelfType = TypeVar("SelfType", bound="GFElement[PolynomialType]")
+    SelfType = TypeVar("SelfType", bound="ModularBinaryPolynomial[PolynomialType]")
 
     @overload
     def __init__(self, value: PolynomialType, modulus: Union[PolynomialType, int]) -> None:
@@ -293,7 +293,7 @@ class GFElement(Generic[PolynomialType]):
         if isinstance(other, (int, self.polynomial_type)):
             other = type(self)(self._value.coerce(other), self._modulus)
         if (
-            isinstance(other, GFElement)
+            isinstance(other, ModularBinaryPolynomial)
             and self._value == other._value
             and self._modulus == other._modulus
         ):
@@ -311,14 +311,14 @@ class GFElement(Generic[PolynomialType]):
     del SelfType
 
 
-def random(modulus: BinaryPolynomial) -> GFElement[BinaryPolynomial]:
+def random(modulus: BinaryPolynomial) -> ModularBinaryPolynomial[BinaryPolynomial]:
     value = secrets.randbits(modulus._value.bit_length() - 1)
-    return GFElement(value, modulus)
+    return ModularBinaryPolynomial(value, modulus)
 
 
 __all__ = [
     "get_modulus",
     "BinaryPolynomial",
-    "GFElement",
+    "ModularBinaryPolynomial",
     "random",
 ]

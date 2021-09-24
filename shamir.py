@@ -1,24 +1,25 @@
 from collections.abc import Iterable
 import gf
 
-E = gf.GFElement[gf.BinaryPolynomial]
+# Galois Field Element
+GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
-def split(secret: E, n:int, k:int) -> tuple[tuple[E, E], ...]:
+def split(secret: GFE, n:int, k:int) -> list[tuple[GFE, GFE], ...]:
     coeffs = tuple(gf.random(secret.modulus) for _ in range(k - 1)) + (secret,) # from high degree to low degree
     print("coeffs:", coeffs)
-    result: list[tuple[E, E]] = []
+    result: list[tuple[GFE, GFE]] = []
     for i in range(1, n+1):
         accum = secret.coerce(0)
         for coeff in coeffs:
             accum *= i
             accum += coeff
         result.append((secret.coerce(i), accum))
-    return tuple(result)
+    return result
     
     
-def recover(shares: Iterable[tuple[E, E]]) -> E:
-    result: E
-    accum: E
+def recover(shares: Iterable[tuple[GFE, GFE]]) -> GFE:
+    result: GFE
+    accum: GFE
     for x_i, y_i in shares:
         for x_j, _ in shares:
             if x_j == x_i:
