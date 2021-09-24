@@ -18,12 +18,11 @@ _default_prim_poly = {
     192: (15, 11, 5),
     160: (5, 3, 2),
     128: (7, 2, 1),
-    64: (4, 3, 1), # for testing
-    32: (7, 6, 2), # for testing
-    16: (5, 3, 2), # for testing
+    64: (4, 3, 1),  # for testing
+    32: (7, 6, 2),  # for testing
+    16: (5, 3, 2),  # for testing
     8: (4, 3, 1),  # Rijndael/AES modulus, for testing
 }
-
 
 
 def get_modulus(bit_length: int) -> BinaryPolynomial:
@@ -165,17 +164,23 @@ class BinaryPolynomial:
 
     del SelfType
 
+
 PolynomialType = TypeVar("PolynomialType", bound=BinaryPolynomial)
+
 
 class ModularBinaryPolynomial(Generic[PolynomialType]):
     __slots__ = "_value", "_modulus"
     _value: PolynomialType
     _modulus: PolynomialType
 
-    SelfType = TypeVar("SelfType", bound="ModularBinaryPolynomial[PolynomialType]")
+    SelfType = TypeVar(
+        "SelfType", bound="ModularBinaryPolynomial[PolynomialType]"
+    )
 
     @overload
-    def __init__(self, value: PolynomialType, modulus: Union[PolynomialType, int]) -> None:
+    def __init__(
+        self, value: PolynomialType, modulus: Union[PolynomialType, int]
+    ) -> None:
         ...
 
     @overload
@@ -201,7 +206,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     ) -> SelfType:
         if isinstance(other, (int, self.polynomial_type)):
             return type(self)(self._value.coerce(other), self._modulus)
-        if self._modulus != self._modulus.coerce(other._modulus): # type: ignore # mypy fails to narrow
+        if self._modulus != self._modulus.coerce(other._modulus):  # type: ignore # mypy fails to narrow
             raise ValueError("Different fields")
         return type(self)(self._value.coerce(other._value), self._modulus)
 
@@ -260,7 +265,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
             quotient = r // r_new
             r, r_new = r_new, r - quotient * r_new
             t, t_new = t_new, t - quotient * t_new
-        if r != 1: # type: ignore # mypy strict-equality gives a false-positive
+        if r != 1:  # type: ignore # mypy strict-equality gives a false-positive
             raise ZeroDivisionError("zero element or modulus is reducible")
         return type(self)(t, self._modulus)
 
@@ -284,7 +289,6 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return f"{type(self).__name__}({bin(int(self._value))}, {bin(int(self._modulus))})"
 
     __repr__ = __str__
-
 
     def __hash__(self) -> int:
         return hash(int(self))
@@ -311,7 +315,9 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     del SelfType
 
 
-def random(modulus: BinaryPolynomial) -> ModularBinaryPolynomial[BinaryPolynomial]:
+def random(
+    modulus: BinaryPolynomial,
+) -> ModularBinaryPolynomial[BinaryPolynomial]:
     value = secrets.randbits(modulus._value.bit_length() - 1)
     return ModularBinaryPolynomial(value, modulus)
 
