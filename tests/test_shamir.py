@@ -4,6 +4,7 @@ import random
 import shamir
 import gf
 
+
 class TestShamir(unittest.TestCase):
     def setUp(self) -> None:
         self.modulus = gf.get_modulus(16)

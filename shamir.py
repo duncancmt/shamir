@@ -5,7 +5,7 @@ import gf
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
-def split(secret: GFE, n: int, k: int) -> list[tuple[GFE, GFE], ...]:
+def split(secret: GFE, n: int, k: int) -> list[tuple[GFE, GFE]]:
     # from high degree to low degree
     coeffs = tuple(gf.random(secret.modulus) for _ in range(k - 1)) + (secret,)
     result: list[tuple[GFE, GFE]] = []
