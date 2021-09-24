@@ -1,32 +1,68 @@
-from collections.abc import Iterable
+from typing import TypeVar
+from collections.abc import Iterable, Iterator
+import hashlib
 import gf
+import itertools
+
+T = TypeVar("T")
+
+
+def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+    return zip(*([iter(iterable)] * n))
+
 
 # Galois Field Element
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
-def split(secret: GFE, n: int, k: int) -> list[tuple[GFE, GFE]]:
+def random_elements(
+    secret: GFE, how_many: int, version: int = 0
+) -> Iterator[GFE]:
+    byte_length, remainder = divmod(secret.bit_length(), 8)
+    assert remainder == 0
+    h = hashlib.shake_256()
+    h.update(
+        bytes(secret)
+        + bytes(secret.modulus)
+        + version.to_bytes((version.bit_length() - 1) // 8 + 1, "little")
+    )
+    return iter(
+        secret.coerce(int.from_bytes(x, "little"))
+        for x in grouper(h.digest(byte_length * how_many), byte_length)
+    )
+
+
+def split(
+    secret: GFE, n: int, k: int, version: int = 0
+) -> list[tuple[int, GFE, GFE]]:
+    noise = random_elements(secret, n + k - 1, version)
     # from high degree to low degree
-    coeffs = tuple(gf.random(secret.modulus) for _ in range(k - 1)) + (secret,)
-    result: list[tuple[GFE, GFE]] = []
-    for i in map(secret.coerce, range(1, n + 1)):
+    coeffs = tuple(itertools.islice(noise, k - 1)) + (secret,)
+    result: list[tuple[int, GFE, GFE]] = []
+    for i, x in zip(itertools.count(1), noise):
         accum = secret.coerce(0)
         for coeff in coeffs:
-            accum *= i
+            accum *= x
             accum += coeff
-        result.append((i, accum))
+        result.append((i, x, accum))
     return result
 
 
-def recover(shares: Iterable[tuple[GFE, GFE]]) -> GFE:
+def recover(shares: Iterable[tuple[int, GFE, GFE]], version: int = 0) -> GFE:
     result: GFE
-    for x_i, accum in shares:
-        for x_j, _ in shares:
-            if x_j == x_i:
+    shares = tuple(shares)
+    n = 0
+    for i, x_i, accum in shares:
+        n = max(i, n)
+        for j, x_j, _ in shares:
+            if j == i:
                 continue
             accum *= x_j / (x_j - x_i)
         try:
             result += accum
         except NameError:
             result = accum
+    original_shares = frozenset(split(result, n, len(shares), version))
+    for i in shares:
+        assert i in original_shares
     return result
