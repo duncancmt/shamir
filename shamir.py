@@ -24,7 +24,8 @@ def modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
         bit = modulus.bit_length() - 1
         bits.append(bit)
         modulus &= ~(1 << bit)
-    assert len(bits) == 3
+    if len(bits) != 3:
+        raise ValueError(f"Invalid modulus {bits}")
     return (
         bits[0].to_bytes(1, "big")
         + bits[1].to_bytes(1, "big")
@@ -80,7 +81,8 @@ def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
             result = accum
     original_shares = split(result, k, n, version)
     for i in shares:
-        assert i in original_shares
+        if i not in original_shares:
+            raise ValueError("Invalid/malicious share")
     return result
 
 

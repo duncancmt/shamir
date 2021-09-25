@@ -20,7 +20,8 @@ assert wordlist == sorted(wordlist)
 
 
 def checksum(entropy: bytes) -> int:
-    assert len(entropy) in (16, 20, 24, 28, 32)
+    if len(entropy) not in (16, 20, 24, 28, 32):
+        raise ValueError(f"Invalid entropy length {len(entropy)}")
     checksum_bits = len(entropy) // 4
     checksum_bytes = (checksum_bits + 7) // 8
     h = hashlib.sha256()
@@ -47,7 +48,8 @@ def decode(words: str) -> bytes:
     raw: list[int] = []
     for word in words:
         raw.append(bisect.bisect_left(wordlist, word))
-    assert len(raw) in (12, 15, 18, 21, 24)
+    if len(raw) not in (12, 15, 18, 21, 24):
+        raise ValueError(f"Invalid mnemonic length {len(raw)}")
     checksum_bits = len(raw) // 3
     entropy_bits = len(raw) * 11 - checksum_bits
     raw = functools.reduce(
@@ -55,7 +57,8 @@ def decode(words: str) -> bytes:
         (x << (i * 11) for i, x in zip(range(len(raw) - 1, -1, -1), raw)),
     )
     entropy = (raw >> checksum_bits).to_bytes(entropy_bits // 8, "big")
-    assert raw & ((1 << checksum_bits) - 1) == checksum(entropy)
+    if raw & ((1 << checksum_bits) - 1) != checksum(entropy):
+        raise ValueError(f"Bad checksum")
     return entropy
 
 
