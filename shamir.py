@@ -26,9 +26,9 @@ def modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
         modulus &= ~(1 << bit)
     assert len(bits) == 3
     return (
-        bits[0].to_bytes(1, "little")
-        + bits[1].to_bytes(1, "little")
-        + bits[2].to_bytes(1, "little")
+        bits[0].to_bytes(1, "big")
+        + bits[1].to_bytes(1, "big")
+        + bits[2].to_bytes(1, "big")
     )
 
 
@@ -39,11 +39,11 @@ def random_elements(
     h.update(
         bytes(secret)
         + modulus_bytes(secret.modulus)
-        + how_many.to_bytes(4, "little")
-        + version.to_bytes(4, "little")
+        + how_many.to_bytes(4, "big")
+        + version.to_bytes(4, "big")
     )
     return iter(
-        secret.coerce(int.from_bytes(x, "little"))
+        secret.coerce(int.from_bytes(x, "big"))
         for x in grouper(h.digest(len(secret) * how_many), len(secret))
     )
 

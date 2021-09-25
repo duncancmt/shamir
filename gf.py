@@ -44,7 +44,7 @@ class BinaryPolynomial:
     def __init__(self, value: Union[int, bytes]) -> None:
         """Set the underlying bit-field representation, ensuring that it's positive."""
         if isinstance(value, bytes):
-            value = int.from_bytes(value, "little")
+            value = int.from_bytes(value, "big")
         if value < 0:
             value = -value
         self._value = value
@@ -143,7 +143,7 @@ class BinaryPolynomial:
 
     def __pow__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         if isinstance(other, bytes):
-            other = int.from_bytes(other, "little")
+            other = int.from_bytes(other, "big")
         shifted = self
         result = type(self)(1)
         while other:
@@ -166,7 +166,7 @@ class BinaryPolynomial:
     def __bytes__(self) -> bytes:
         if not self:
             return b""
-        return int(self).to_bytes(len(self), "little")
+        return int(self).to_bytes(len(self), "big")
 
     def __bool__(self) -> bool:
         """Nonzero-ness of the binary polynomial."""
@@ -302,7 +302,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
 
     def __pow__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         if isinstance(other, bytes):
-            other = int.from_bytes(other, "little")
+            other = int.from_bytes(other, "big")
         shifted = self
         result = type(self)(1, self._modulus)
         while other:
@@ -320,7 +320,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
 
     def __bytes__(self) -> bytes:
         # TODO: this is different from bytes(self._value) add unit test to demonstrate
-        return int(self).to_bytes(len(self), "little")
+        return int(self).to_bytes(len(self), "big")
 
     def __int__(self) -> int:
         return int(self._value)
