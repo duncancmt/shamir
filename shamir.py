@@ -49,7 +49,7 @@ def random_elements(
 
 
 def split(
-    secret: GFE, n: int, k: int, version: int = 0
+    secret: GFE, k: int, n: int, version: int = 0
 ) -> list[tuple[GFE, GFE]]:
     # from high degree to low degree
     coeffs = tuple(random_elements(secret, k - 1, version)) + (secret,)
@@ -65,11 +65,11 @@ def split(
 
 def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
     result: GFE
-    n = 0
     k = 0
+    n = 0
     for x_i, accum in shares:
-        n = max(int(x_i), n)
         k += 1
+        n = max(int(x_i), n)
         for x_j, _ in shares:
             if x_j == x_i:
                 continue
@@ -78,7 +78,10 @@ def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
             result += accum
         except NameError:
             result = accum
-    original_shares = split(result, n, k, version)
+    original_shares = split(result, k, n, version)
     for i in shares:
         assert i in original_shares
     return result
+
+
+__all__ = ["split", "recover"]

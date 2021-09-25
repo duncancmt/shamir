@@ -12,15 +12,15 @@ class TestShamir(unittest.TestCase):
         self.secret = gf.ModularBinaryPolynomial(
             secrets.randbits(self.modulus.bit_length() - 1), self.modulus
         )
-        self.n = 16
         self.k = 5
+        self.n = 16
         self.version = 1
 
     def test_shamir(self) -> None:
         for i in range(1000):
             with self.subTest(i=i):
                 shares = shamir.split(
-                    self.secret, self.n, self.k, self.version
+                    self.secret, self.k, self.n, self.version
                 )
                 self.assertEqual(len(shares), self.n)
                 shares = random.sample(shares, self.k)
