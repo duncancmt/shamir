@@ -31,16 +31,16 @@ def checksum(entropy: bytes) -> int:
     return result
 
 
-def encode(entropy: bytes) -> tuple[str, ...]:
+def encode(entropy: bytes) -> list[str]:
+    num_words = len(entropy) * 3 // 4
     checksum_bits = len(entropy) // 4
-    checksummed = (int.from_bytes(entropy, "big") << checksum_bits) | checksum(
-        entropy
-    )
+    entropy_int = int.from_bytes(entropy, "big")
+    to_encode = (entropy_int << checksum_bits) | checksum(entropy)
     result: list[str] = []
-    for i in range(len(entropy) * 3 // 4 - 1, -1, -1):
-        word_index = (checksummed >> (i * 11)) & 2047
+    for i in range(num_words - 1, -1, -1):
+        word_index = (to_encode >> (i * 11)) & 2047
         result.append(wordlist[word_index])
-    return tuple(result)
+    return result
 
 
 def decode(words: str) -> bytes:
@@ -54,10 +54,11 @@ def decode(words: str) -> bytes:
     entropy_bits = len(raw) * 11 - checksum_bits
     raw = functools.reduce(
         operator.or_,
-        (x << (i * 11) for i, x in zip(range(len(raw) - 1, -1, -1), raw)),
+        (x << i for i, x in zip(range((len(raw) - 1) * 11, -1, -11), raw)),
     )
     entropy = (raw >> checksum_bits).to_bytes(entropy_bits // 8, "big")
-    if raw & ((1 << checksum_bits) - 1) != checksum(entropy):
+    mask = (1 << checksum_bits) - 1
+    if raw & mask != checksum(entropy):
         raise ValueError(f"Bad checksum")
     return entropy
 

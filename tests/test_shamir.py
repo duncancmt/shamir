@@ -16,7 +16,8 @@ class TestShamir(unittest.TestCase):
                 for version in range(10):
                     with self.subTest(k=k, n=n, version=version):
                         secret = gf.ModularBinaryPolynomial(
-                            secrets.randbits(self.modulus.bit_length() - 1), self.modulus
+                            secrets.randbits(self.modulus.bit_length() - 1),
+                            self.modulus,
                         )
                         shares = shamir.split(secret, k, n, version)
                         self.assertEqual(len(shares), n)
