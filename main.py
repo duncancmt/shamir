@@ -23,7 +23,7 @@ try:
         for x, y in shamir.split(secret, to_recover, num_shares, version):
             print(
                 int(x),
-                " ".join(bip39.encode(bytes(y))),
+                bip39.encode(bytes(y)),
                 sep=": ",
                 file=sys.stdout,
                 flush=True,
@@ -41,7 +41,7 @@ try:
         except:
             version = 0
         print(
-            " ".join(bip39.encode(bytes(shamir.recover(shares, version)))),
+            bip39.encode(bytes(shamir.recover(shares, version))),
             file=sys.stdout,
             flush=True,
         )

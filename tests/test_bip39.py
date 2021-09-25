@@ -109,7 +109,7 @@ class TestBIP39(unittest.TestCase):
     def test_vectors(self) -> None:
         for i, (entropy, mnemonic) in enumerate(self.vectors):
             with self.subTest(i=i, entropy=entropy, mnemonic=mnemonic):
-                self.assertEqual(" ".join(bip39.encode(entropy)), mnemonic)
+                self.assertEqual(bip39.encode(entropy), mnemonic)
                 self.assertEqual(bip39.decode(mnemonic), entropy)
 
     def test_random(self) -> None:
@@ -117,7 +117,7 @@ class TestBIP39(unittest.TestCase):
             for i in range(10000):
                 with self.subTest(l=l, i=i):
                     entropy = secrets.randbits(l * 8).to_bytes(l, "big")
-                    mnemonic = bip39.encode(entropy)
+                    mnemonic = bip39.encode(entropy).split(" ")
                     mnemonic = map(
                         "".join, map(operator.itemgetter(slice(4)), mnemonic)
                     )

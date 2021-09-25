@@ -21,8 +21,6 @@ assert wordlist == sorted(wordlist)
 
 
 def checksum(entropy: bytes) -> int:
-    if len(entropy) not in (16, 20, 24, 28, 32):
-        raise ValueError(f"Invalid entropy length {len(entropy)}")
     checksum_bits = len(entropy) // 4
     checksum_bytes = (checksum_bits + 7) // 8
     h = hashlib.sha256()
@@ -32,7 +30,9 @@ def checksum(entropy: bytes) -> int:
     return result
 
 
-def encode(entropy: bytes) -> list[str]:
+def encode(entropy: bytes, sep: str = " ") -> str:
+    if len(entropy) not in (16, 20, 24, 28, 32):
+        raise ValueError(f"Invalid entropy length {len(entropy)}")
     num_words = len(entropy) * 3 // 4
     checksum_bits = len(entropy) // 4
     entropy_int = int.from_bytes(entropy, "big")
@@ -41,7 +41,7 @@ def encode(entropy: bytes) -> list[str]:
     for i in range(num_words - 1, -1, -1):
         word_index = (to_encode >> (i * 11)) & 2047
         result.append(wordlist[word_index])
-    return result
+    return sep.join(result)
 
 
 def decode(words: str) -> bytes:
