@@ -48,7 +48,13 @@ def decode(words: str) -> bytes:
     words = unicodedata.normalize("NFKD", words).split(" ")
     raw: list[int] = []
     for word in words:
-        raw.append(bisect.bisect_left(wordlist, word))
+        i = bisect.bisect_left(wordlist, word)
+        if not wordlist[i].startswith(word):
+            raise ValueError(f"Invalid mnemonic word '{word}'")
+        # the middle condition is incidentally not required for the English wordlist
+        if wordlist[i] != word and i + 1 < len(wordlist) and wordlist[i + 1].startswith(word):
+            raise ValueError(f"Ambiguous mnemonic word '{word}'")
+        raw.append(i)
     if len(raw) not in (12, 15, 18, 21, 24):
         raise ValueError(f"Invalid mnemonic length {len(raw)}")
     checksum_bits = len(raw) // 3
@@ -60,7 +66,7 @@ def decode(words: str) -> bytes:
     entropy = (raw >> checksum_bits).to_bytes(entropy_bits // 8, "big")
     mask = (1 << checksum_bits) - 1
     if raw & mask != checksum(entropy):
-        raise ValueError(f"Bad checksum")
+        raise ValueError("Bad checksum")
     return entropy
 
 
