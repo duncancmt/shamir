@@ -3,8 +3,11 @@ from __future__ import annotations
 import secrets
 from types import TracebackType
 from typing import Generic, Literal, Optional, Type, TypeVar, Union, overload
+import warnings
 
 _default_prim_poly = {
+    # these excessively-large moduli are provided for future applications which
+    # may want a very large group
     1024: (23, 22, 9),
     896: (23, 21, 16),
     768: (19, 17, 4),
@@ -13,20 +16,24 @@ _default_prim_poly = {
     448: (11, 6, 4),
     384: (16, 15, 6),
     320: (4, 3, 1),
+    # these are the only moduli used in practice due to BIP-0039 constraints
     256: (10, 5, 2),
     224: (12, 7, 2),
     192: (15, 11, 5),
     160: (5, 3, 2),
     128: (7, 2, 1),
-    64: (4, 3, 1),  # for testing
-    32: (7, 6, 2),  # for testing
-    16: (5, 3, 2),  # for testing
-    8: (4, 3, 1),  # Rijndael/AES modulus, for testing
+    # these moduli are provided only for testing
+    64: (4, 3, 1),
+    32: (7, 6, 2),
+    16: (5, 3, 2),
+    8: (4, 3, 1),  # Rijndael/AES modulus
 }
 
 
 def get_modulus(bit_length: int) -> BinaryPolynomial:
     """Get the default modulus for the given bit length."""
+    if bit_length < 128:
+        warnings.warn("Short bit length selected. Use this only for testing.")
     modulus = (1 << bit_length) | 1
     for i in _default_prim_poly[bit_length]:
         modulus |= 1 << i
@@ -319,7 +326,8 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return (self.bit_length() + 7) // 8
 
     def __bytes__(self) -> bytes:
-        # TODO: this is different from bytes(self._value) add unit test to demonstrate
+        # This is different from bytes(self._value) because it uses the length
+        # of the modulus
         return int(self).to_bytes(len(self), "big")
 
     def __int__(self) -> int:

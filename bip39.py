@@ -57,10 +57,10 @@ def decode(words: str) -> bytes:
         i = bisect.bisect_left(wordlist, word)
         if not wordlist[i].startswith(word):
             raise ValueError(f"Invalid mnemonic word '{word}'")
-        # the middle condition is incidentally not required for the English wordlist
+
         if (
             wordlist[i] != word
-            and i + 1 < len(wordlist)
+            and i + 1 < len(wordlist)  # superfluous for the English wordlist
             and wordlist[i + 1].startswith(word)
         ):
             raise ValueError(f"Ambiguous mnemonic word '{word}'")
