@@ -1,5 +1,6 @@
 import secrets
 import unittest
+import operator
 
 import bip39
 
@@ -113,8 +114,10 @@ class TestBIP39(unittest.TestCase):
 
     def test_random(self) -> None:
         for l in (16, 20, 24, 28, 32):
-            for i in range(1000):
+            for i in range(10000):
                 with self.subTest(l=l, i=i):
                     entropy = secrets.randbits(l * 8).to_bytes(l, "big")
-                    mnemonic = " ".join(bip39.encode(entropy))
+                    mnemonic = bip39.encode(entropy)
+                    mnemonic = map("".join, map(operator.itemgetter(slice(4)), mnemonic))
+                    mnemonic = " ".join(mnemonic)
                     self.assertEqual(bip39.decode(mnemonic), entropy)
