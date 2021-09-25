@@ -12,7 +12,8 @@ with open(
     encoding="utf-8",
 ) as f:
     for l in f:
-        wordlist.append(unicodedata.normalize("NFKD", l).strip())
+        assert unicodedata.is_normalized("NFKD", l)
+        wordlist.append(l.strip())
 del f
 del l
 assert len(wordlist) == 2048
