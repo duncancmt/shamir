@@ -16,15 +16,31 @@ def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
+def modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
+    modulus = int(modulus)
+    modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
+    bits: list[int] = []
+    while modulus:
+        bit = modulus.bit_length() - 1
+        bits.append(bit)
+        modulus &= ~(1 << bit)
+    assert len(bits) == 3
+    return (
+        bits[0].to_bytes(1, "little")
+        + bits[1].to_bytes(1, "little")
+        + bits[2].to_bytes(1, "little")
+    )
+
+
 def random_elements(
-    secret: GFE, k: int, how_many: int, version: int = 0
+    secret: GFE, how_many: int, version: int = 0
 ) -> Iterator[GFE]:
     h = hashlib.shake_256()
     h.update(
         bytes(secret)
-        + bytes(secret.modulus)
-        + k.to_bytes((k.bit_length() + 7) // 8, "little")
-        + version.to_bytes((version.bit_length() + 7) // 8, "little")
+        + modulus_bytes(secret.modulus)
+        + how_many.to_bytes(4, "little")
+        + version.to_bytes(4, "little")
     )
     return iter(
         secret.coerce(int.from_bytes(x, "little"))
@@ -34,29 +50,28 @@ def random_elements(
 
 def split(
     secret: GFE, n: int, k: int, version: int = 0
-) -> list[tuple[int, GFE, GFE]]:
-    noise = random_elements(secret, k, n + k - 1, version)
+) -> list[tuple[GFE, GFE]]:
     # from high degree to low degree
-    coeffs = tuple(itertools.islice(noise, k - 1)) + (secret,)
-    result: list[tuple[int, GFE, GFE]] = []
-    for i, x in zip(itertools.count(1), noise):
+    coeffs = tuple(random_elements(secret, k - 1, version)) + (secret,)
+    result: list[tuple[GFE, GFE]] = []
+    for i in map(secret.coerce, range(1, n + 1)):
         accum = secret.coerce(0)
         for coeff in coeffs:
-            accum *= x
+            accum *= i
             accum += coeff
-        result.append((i, x, accum))
+        result.append((i, accum))
     return result
 
 
-def recover(shares: Iterable[tuple[int, GFE, GFE]], version: int = 0) -> GFE:
+def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
     result: GFE
     n = 0
     k = 0
-    for i, x_i, accum in shares:
-        n = max(i, n)
+    for x_i, accum in shares:
+        n = max(int(x_i), n)
         k += 1
-        for j, x_j, _ in shares:
-            if j == i:
+        for x_j, _ in shares:
+            if x_j == x_i:
                 continue
             accum *= x_j / (x_j - x_i)
         try:
