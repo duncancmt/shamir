@@ -78,7 +78,7 @@ def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
             result += accum
         except NameError:
             result = accum
-    original_shares = frozenset(split(result, n, k, version))
+    original_shares = split(result, n, k, version)
     for i in shares:
         assert i in original_shares
     return result
