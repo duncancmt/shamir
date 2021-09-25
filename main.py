@@ -1,6 +1,7 @@
 import argparse
 import sys
 from collections.abc import Iterable
+from typing import Any
 
 import bip39
 import gf
@@ -23,28 +24,16 @@ def int_and_mnemonic(arg: str) -> tuple[GFE, GFE]:
     return x, y
 
 
-parser = argparse.ArgumentParser()
-subparsers = parser.add_subparsers(required=True, dest="subcommand")
-split_parser = subparsers.add_parser("split")
-split_parser.add_argument("secret", type=mnemonic)
-split_parser.add_argument("--shares", type=int)
-split_parser.add_argument("--needed", type=int)
-split_parser.add_argument("--version", type=int, default=0)
-recover_parser = subparsers.add_parser("recover")
-recover_parser.add_argument("shares", nargs="+", type=int_and_mnemonic)
-recover_parser.add_argument("--version", type=int, default=0)
-args = parser.parse_args()
-
-secret: GFE
-shares: Iterable[tuple[GFE, GFE]]
-
-if args.subcommand == "split":
-    secret = args.secret
+def split(args: Any) -> None:
+    secret: GFE = args.secret
+    k: int = args.needed
+    n: int = args.shares
+    version: int = args.version
     try:
-        shares = shamir.split(secret, args.needed, args.shares, args.version)
+        shares = shamir.split(secret, k, n, version)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
-        sys.exit(1)
+        exit(1)
     for x, y in shares:
         print(
             int(x),
@@ -53,15 +42,66 @@ if args.subcommand == "split":
             file=sys.stdout,
             flush=True,
         )
-elif args.subcommand == "recover":
-    shares = args.shares
+
+
+def recover(args: Any) -> None:
+    shares: Iterable[tuple[GFE, GFE]] = args.shares
+    version: int = args.version
     try:
-        secret = shamir.recover(shares, args.version)
+        secret = shamir.recover(shares, version)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
-        sys.exit(1)
+        exit(1)
     print(
         bip39.encode(bytes(secret)),
         file=sys.stdout,
         flush=True,
     )
+
+
+# fmt: off
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--version",
+    type=int,
+    default=0,
+    help="Nonce to distinguish multiple splits of the same secret",
+)
+subparsers = parser.add_subparsers(required=True)
+
+split_parser = subparsers.add_parser(
+    "split",
+    help="Split a BIP-0039 mnemonic into a sequence of shares that can be used to recover the original mnemonic",
+)
+split_parser.add_argument(
+    "secret",
+    type=mnemonic,
+    help="BIP-0039 mnemonic"
+)
+split_parser.add_argument(
+    "--shares",
+    type=int,
+    help="Number of shares to calculate and print"
+)
+split_parser.add_argument(
+    "--needed",
+    type=int,
+    help="Number of shares required to recover the secret",
+)
+split_parser.set_defaults(func=split)
+
+recover_parser = subparsers.add_parser(
+    "recover",
+    help="Given numbered BIP-0039 mnemonic shares, recover the original mnemonic they were split from",
+)
+recover_parser.add_argument(
+    "shares",
+    nargs="+",
+    type=int_and_mnemonic,
+    metavar="NUMBER,MNEMONIC",
+    help="Numbered mnemonics produced from the original using `split`",
+)
+recover_parser.set_defaults(func=recover)
+
+args = parser.parse_args()
+args.func(args)
