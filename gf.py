@@ -50,7 +50,7 @@ class BinaryPolynomial:
         self._value = value
 
     def coerce(self: SelfType, other: Union[SelfType, int, bytes]) -> SelfType:
-        """Coerce an possibly-integer to a BinaryPolynomial."""
+        """Coerce a possibly-integer to a BinaryPolynomial."""
         if isinstance(other, (int, bytes)):
             return type(self)(other)
         return type(self)(other._value)
@@ -320,8 +320,6 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
 
     def __bytes__(self) -> bytes:
         # TODO: this is different from bytes(self._value) add unit test to demonstrate
-        if not self:
-            return b""
         return int(self).to_bytes(len(self), "little")
 
     def __int__(self) -> int:
