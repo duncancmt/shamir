@@ -27,6 +27,15 @@ optional arguments:
 ```
 
 ```
+$ ./main.py split "test test test test test test test test test test test junk" --needed 3 --shares 5
+1: early dad before body scissors couch private goddess riot boost season quit
+2: drop appear actress seat permit off cabin result chronic task purse column
+3: supply token siren ahead sad involve hidden arrest evidence blouse rebel wide
+4: document head evidence popular calm cram wine industry search two behind bounce
+5: suspect lock major hungry dignity tail monkey silk police collect ankle snack
+```
+
+```
 $ ./main.py recover --help
 usage: main.py recover [-h] NUMBER,MNEMONIC [NUMBER,MNEMONIC ...]
 
@@ -35,4 +44,9 @@ positional arguments:
 
 optional arguments:
   -h, --help       show this help message and exit
+```
+
+```
+$ ./main.py recover 5,'suspect lock major hungry dignity tail monkey silk police collect ankle snack' 2,'drop appear actress seat permit off cabin result chronic task purse column' 3,'supply token siren ahead sad involve hidden arrest evidence blouse rebel wide'
+test test test test test test test test test test test junk
 ```
