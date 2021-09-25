@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import secrets
+import warnings
 from types import TracebackType
 from typing import Generic, Literal, Optional, Type, TypeVar, Union, overload
-import warnings
 
 _default_prim_poly = {
     # these excessively-large moduli are provided for future applications which
