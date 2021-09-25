@@ -1,6 +1,5 @@
 import os.path
 import hashlib
-from collections.abc import Iterable
 import operator
 import functools
 import bisect
@@ -43,12 +42,11 @@ def encode(entropy: bytes) -> tuple[str, ...]:
     return tuple(result)
 
 
-def decode(words: Iterable[str]) -> bytes:
+def decode(words: str) -> bytes:
+    words = unicodedata.normalize("NFKD", words).split(" ")
     raw: list[int] = []
     for word in words:
-        raw.append(
-            bisect.bisect_left(wordlist, unicodedata.normalize("NFKD", word))
-        )
+        raw.append(bisect.bisect_left(wordlist, word))
     assert len(raw) in (12, 15, 18, 21, 24)
     checksum_bits = len(raw) // 3
     entropy_bits = len(raw) * 11 - checksum_bits
