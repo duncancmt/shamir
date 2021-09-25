@@ -32,6 +32,8 @@ def checksum(entropy: bytes) -> int:
 
 def encode(entropy: bytes, sep: str = " ") -> str:
     if unicodedata.normalize("NFKD", sep) != " ":
+        if len(sep) != 0:
+            raise ValueError(f"Multi-character ({len(sep)}) separator '{sep}'")
         raise ValueError(
             f"Separator '{sep}' ({unicodedata.name(sep)}) does not normalize to space"
         )
