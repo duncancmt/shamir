@@ -31,6 +31,10 @@ def checksum(entropy: bytes) -> int:
 
 
 def encode(entropy: bytes, sep: str = " ") -> str:
+    if unicodedata.normalize("NFKD", sep) != " ":
+        raise ValueError(
+            f"Separator '{sep}' ({unicodedata.name(sep)}) does not normalize to space"
+        )
     if len(entropy) not in (16, 20, 24, 28, 32):
         raise ValueError(f"Invalid entropy length {len(entropy)}")
     num_words = len(entropy) * 3 // 4
