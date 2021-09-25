@@ -1,8 +1,8 @@
+import sys
+
+import bip39
 import gf
 import shamir
-import bip39
-
-import sys
 
 # Galois Field Element
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]

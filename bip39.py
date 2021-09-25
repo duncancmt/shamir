@@ -1,8 +1,8 @@
-import os.path
+import bisect
+import functools
 import hashlib
 import operator
-import functools
-import bisect
+import os.path
 import unicodedata
 
 wordlist: list[str] = []
