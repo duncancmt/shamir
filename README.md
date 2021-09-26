@@ -86,18 +86,18 @@ Note the mixed abbreviation and in some cases extreme abbreviation of some
 mnemonic words. As long as it's unambiguous, the program will accept it.
 
 ```
-$ ./main.py recover 5,'suspect lock maj hung dign tai monkey silk poli coll ank snac' \
-> 2,'dro appe actress seat perm off cabi resu chr task purse colu' \
-> 3,'supply tok sir ahead sad involve hid arre evid blou rebe wide'
+$ ./main.py recover '5,suspect lock maj hung dign tai monkey silk poli coll ank snac' \
+> '2,dro appe actress seat perm off cabi resu chr task purse colu' \
+> '3,supply tok sir ahead sad involve hid arre evid blou rebe wide'
 test test test test test test test test test test test junk
 ```
 
 ### Too much abbreviation
 
 ```
-$ ./main.py recover 5,'sus lock maj hung dign tai monkey silk poli coll ank snac' \
-> 2,'dro appe actress seat perm off cabi resu chr task purse colu' \
-> 3,'supply tok sir ahead sad involve hid arre evid blou rebe wide'
+$ ./main.py recover '5,sus lock maj hung dign tai monkey silk poli coll ank snac' \
+> '2,dro appe actress seat perm off cabi resu chr task purse colu' \
+> '3,supply tok sir ahead sad involve hid arre evid blou rebe wide'
 usage: main.py recover [-h] NUMBER,MNEMONIC [NUMBER,MNEMONIC ...]
 main.py recover: error: argument NUMBER,MNEMONIC: invalid int_and_mnemonic value: '5,sus lock maj hung dign tai monkey silk poli coll ank snac'
 ```
@@ -105,17 +105,17 @@ main.py recover: error: argument NUMBER,MNEMONIC: invalid int_and_mnemonic value
 ### Not enough shares
 
 ```
-$ ./main.py recover 5,'suspect lock major hungry dignity tail monkey silk police collect ankle snack' \
-> 2,'drop appear actress seat permit off cabin result chronic task purse column'
+$ ./main.py recover '5,suspect lock major hungry dignity tail monkey silk police collect ankle snack' \
+> '2,drop appear actress seat permit off cabin result chronic task purse column'
 Invalid/malicious share
 ```
 
 ### Wrong share
 
 ```
-$ ./main.py recover 5,'suspect lock major hungry dignity tail monkey silk police collect ankle snack' \
-> 2,'drop appear actress seat permit off cabin result chronic task purse column' \
-> 3,'test test test test test test test test test test test junk'
+$ ./main.py recover '5,suspect lock major hungry dignity tail monkey silk police collect ankle snack' \
+> '2,drop appear actress seat permit off cabin result chronic task purse column' \
+> '3,test test test test test test test test test test test junk'
 Invalid/malicious share
 ```
 
@@ -132,8 +132,8 @@ main.py recover: error: argument NUMBER,MNEMONIC: invalid int_and_mnemonic value
 ### Bad checksum
 
 ```
-$ ./main.py recover 5,'suspect lock maj hung dign tai monkey silk poli coll ank aban' \
-> 2,'dro appe actress seat perm off cabi resu chr task purse colu' \
-> 3,'supply tok sir ahead sad involve hid arre evid blou rebe wide'
+$ ./main.py recover '5,suspect lock maj hung dign tai monkey silk poli coll ank aban' \
+> '2,dro appe actress seat perm off cabi resu chr task purse colu' \
+> '3,supply tok sir ahead sad involve hid arre evid blou rebe wide'
 main.py recover: error: argument NUMBER,MNEMONIC: invalid int_and_mnemonic value: '5,suspect lock maj hung dign tai monkey silk poli coll ank aban'
 ```
