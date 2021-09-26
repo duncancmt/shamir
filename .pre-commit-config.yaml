@@ -42,21 +42,12 @@ repos:
     - id: check-case-conflict
     - id: check-docstring-first
     - id: check-executables-have-shebangs
-    - id: check-json
     - id: check-merge-conflict
     - id: check-symlinks
-    - id: check-xml
-    - id: check-yaml
-      args: [--allow-multiple-documents]
     - id: debug-statements
     - id: end-of-file-fixer
     - id: mixed-line-ending
       args: [--fix=lf]
-    - id: no-commit-to-branch
-      args: [--branch, master]
-    - id: pretty-format-json
-      args: [--autofix, --indent, '4', --no-ensure-ascii]
-    - id: requirements-txt-fixer
     - id: trailing-whitespace
 -   repo: local
     hooks:
