@@ -1,3 +1,5 @@
+"""Manipulate BIP-0039 representation of entropy."""
+
 import bisect
 import functools
 import hashlib
@@ -20,7 +22,7 @@ assert len(wordlist) == 2048
 assert wordlist == sorted(wordlist)
 
 
-def checksum(entropy: bytes) -> tuple[int, int]:
+def _checksum(entropy: bytes) -> tuple[int, int]:
     checksum_bits = len(entropy) // 4
     checksum_bytes = (checksum_bits + 7) // 8
     h = hashlib.sha256()
@@ -31,6 +33,11 @@ def checksum(entropy: bytes) -> tuple[int, int]:
 
 
 def encode(entropy: bytes, sep: str = " ") -> str:
+    """Given an entropy `bytes`, return the corresponding BIP-0039 mnemonic.
+
+    The optional argument `sep` is provided for those wordlists (e.g. Japanese)
+    that have to use a non-space separator.
+    """
     if unicodedata.normalize("NFKD", sep) != " ":
         if len(sep) != 1:
             raise ValueError(f"Multi-character ({len(sep)}) separator '{sep}'")
@@ -41,7 +48,7 @@ def encode(entropy: bytes, sep: str = " ") -> str:
         raise ValueError(f"Invalid entropy length {len(entropy)}")
     num_words = len(entropy) * 3 // 4
     entropy_int = int.from_bytes(entropy, "big")
-    checksum_int, checksum_bits = checksum(entropy)
+    checksum_int, checksum_bits = _checksum(entropy)
     to_encode = (entropy_int << checksum_bits) | checksum_int
     result: list[str] = []
     for i in range(num_words - 1, -1, -1):
@@ -51,6 +58,7 @@ def encode(entropy: bytes, sep: str = " ") -> str:
 
 
 def decode(words: str) -> bytes:
+    """Extract the raw entropy bytes from a BIP-0039 mnemonic."""
     words = unicodedata.normalize("NFKD", words).split(" ")
     raw: list[int] = []
     for word in words:
@@ -75,7 +83,7 @@ def decode(words: str) -> bytes:
     )
     entropy = (raw >> checksum_bits).to_bytes(entropy_bits // 8, "big")
     mask = (1 << checksum_bits) - 1
-    if raw & mask != checksum(entropy)[0]:
+    if raw & mask != _checksum(entropy)[0]:
         raise ValueError("Bad checksum")
     return entropy
 
