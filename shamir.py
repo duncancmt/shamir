@@ -34,14 +34,14 @@ def modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
 
 
 def random_elements(
-    secret: GFE, how_many: int, version: int = 0
+    secret: GFE, how_many: int, nonce: int = 0
 ) -> Iterator[GFE]:
     h = hashlib.shake_256()
     h.update(
         bytes(secret)
         + modulus_bytes(secret.modulus)
         + how_many.to_bytes(4, "big")
-        + version.to_bytes(4, "big")
+        + nonce.to_bytes(4, "big")
     )
     return iter(
         secret.coerce(int.from_bytes(x, "big"))
@@ -50,10 +50,10 @@ def random_elements(
 
 
 def split(
-    secret: GFE, k: int, n: int, version: int = 0
+    secret: GFE, k: int, n: int, nonce: int = 0
 ) -> list[tuple[GFE, GFE]]:
     # from high degree to low degree
-    coeffs = tuple(random_elements(secret, k - 1, version)) + (secret,)
+    coeffs = tuple(random_elements(secret, k - 1, nonce)) + (secret,)
     result: list[tuple[GFE, GFE]] = []
     for i in map(secret.coerce, range(1, n + 1)):
         accum = secret.coerce(0)
@@ -64,7 +64,7 @@ def split(
     return result
 
 
-def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
+def recover(shares: Iterable[tuple[GFE, GFE]], nonce: int = 0) -> GFE:
     result: GFE
     k = 0
     n = 0
@@ -79,7 +79,7 @@ def recover(shares: Iterable[tuple[GFE, GFE]], version: int = 0) -> GFE:
             result += accum
         except NameError:
             result = accum
-    original_shares = split(result, k, n, version)
+    original_shares = split(result, k, n, nonce)
     for i in shares:
         if i not in original_shares:
             raise ValueError("Invalid/malicious share")

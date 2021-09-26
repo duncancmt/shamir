@@ -30,9 +30,9 @@ def split(args: Any) -> None:
     secret: GFE = args.secret
     k: int = args.needed
     n: int = args.shares
-    version: int = args.version
+    nonce: int = args.nonce
     try:
-        shares = shamir.split(secret, k, n, version)
+        shares = shamir.split(secret, k, n, nonce)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         exit(1)
@@ -48,9 +48,9 @@ def split(args: Any) -> None:
 
 def recover(args: Any) -> None:
     shares: Iterable[tuple[GFE, GFE]] = args.shares
-    version: int = args.version
+    nonce: int = args.nonce
     try:
-        secret = shamir.recover(shares, version)
+        secret = shamir.recover(shares, nonce)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         exit(1)
@@ -64,7 +64,7 @@ def recover(args: Any) -> None:
 # fmt: off
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--version",
+    "--nonce",
     type=int,
     default=0,
     help="Nonce to distinguish multiple splits of the same secret",

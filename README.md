@@ -1,6 +1,6 @@
 ```
 $ ./main.py --help
-usage: main.py [-h] [--version VERSION] {split,recover} ...
+usage: main.py [-h] [--nonce NONCE] {split,recover} ...
 
 positional arguments:
   {split,recover}
@@ -9,7 +9,7 @@ positional arguments:
 
 optional arguments:
   -h, --help         show this help message and exit
-  --version VERSION  Nonce to distinguish multiple splits of the same secret
+  --nonce NONCE      Nonce to distinguish multiple splits of the same secret
 ```
 
 ```
