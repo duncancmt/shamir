@@ -83,11 +83,13 @@ split_parser.add_argument(
 split_parser.add_argument(
     "--shares",
     type=int,
+    required=True,
     help="Number of shares to calculate and print"
 )
 split_parser.add_argument(
     "--needed",
     type=int,
+    required=True,
     help="Number of shares required to recover the secret",
 )
 split_parser.set_defaults(func=split)

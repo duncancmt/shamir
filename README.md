@@ -12,10 +12,9 @@ optional arguments:
   --version VERSION  Nonce to distinguish multiple splits of the same secret
 ```
 
-
 ```
 $ ./main.py split --help
-usage: main.py split [-h] [--shares SHARES] [--needed NEEDED] secret
+usage: main.py split [-h] --shares SHARES --needed NEEDED secret
 
 positional arguments:
   secret           BIP-0039 mnemonic
