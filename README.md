@@ -46,6 +46,6 @@ optional arguments:
 ```
 
 ```
-$ ./main.py recover 5,'susp lock majo hung dign tail monk silk poli coll ankl snac' 2,'drop appe actr seat perm off cabi resu chro task purs colu' 3,'supp toke sire ahea sad invo hidd arre evid blou rebe wide'
+$ ./main.py recover 5,'suspect lock maj hung dign tai monkey silk poli coll ank snac' 2,'dro appe actress seat perm off cabi resu chr task purse colu' 3,'supply tok sir ahead sad involve hid arre evid blou rebe wide'
 test test test test test test test test test test test junk
 ```
