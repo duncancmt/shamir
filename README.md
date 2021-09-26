@@ -73,6 +73,16 @@ $ ./main.py recover 5,'suspect lock maj hung dign tai monkey silk poli coll ank 
 test test test test test test test test test test test junk
 ```
 
+### Too much abbreviation
+
+```
+$ ./main.py recover 5,'sus lock maj hung dign tai monkey silk poli coll ank snac' \
+> 2,'dro appe actress seat perm off cabi resu chr task purse colu' \
+> 3,'supply tok sir ahead sad involve hid arre evid blou rebe wide'
+usage: main.py recover [-h] NUMBER,MNEMONIC [NUMBER,MNEMONIC ...]
+main.py recover: error: argument NUMBER,MNEMONIC: invalid int_and_mnemonic value: '5,sus lock maj hung dign tai monkey silk poli coll ank snac'
+```
+
 ### Not enough shares
 
 ```
