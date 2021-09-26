@@ -20,14 +20,14 @@ assert len(wordlist) == 2048
 assert wordlist == sorted(wordlist)
 
 
-def checksum(entropy: bytes) -> int:
+def checksum(entropy: bytes) -> tuple[int, int]:
     checksum_bits = len(entropy) // 4
     checksum_bytes = (checksum_bits + 7) // 8
     h = hashlib.sha256()
     h.update(entropy)
     result = int.from_bytes(h.digest()[:checksum_bytes], "big")
     result >>= checksum_bytes * 8 - checksum_bits
-    return result
+    return result, checksum_bits
 
 
 def encode(entropy: bytes, sep: str = " ") -> str:
@@ -40,9 +40,9 @@ def encode(entropy: bytes, sep: str = " ") -> str:
     if len(entropy) not in (16, 20, 24, 28, 32):
         raise ValueError(f"Invalid entropy length {len(entropy)}")
     num_words = len(entropy) * 3 // 4
-    checksum_bits = len(entropy) // 4
     entropy_int = int.from_bytes(entropy, "big")
-    to_encode = (entropy_int << checksum_bits) | checksum(entropy)
+    checksum_int, checksum_bits = checksum(entropy)
+    to_encode = (entropy_int << checksum_bits) | checksum_int
     result: list[str] = []
     for i in range(num_words - 1, -1, -1):
         word_index = (to_encode >> (i * 11)) & 2047
@@ -75,7 +75,7 @@ def decode(words: str) -> bytes:
     )
     entropy = (raw >> checksum_bits).to_bytes(entropy_bits // 8, "big")
     mask = (1 << checksum_bits) - 1
-    if raw & mask != checksum(entropy):
+    if raw & mask != checksum(entropy)[0]:
         raise ValueError("Bad checksum")
     return entropy
 
