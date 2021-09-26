@@ -1,4 +1,6 @@
+import collections
 import unittest
+from typing import MutableMapping
 
 import gf
 
@@ -54,6 +56,46 @@ class TestModularBinaryPolynomialInvert1(unittest.TestCase):
 
     def test_invert(self) -> None:
         self.assertEqual(int(~self.a), self.expected)
+
+
+class TestModularBinaryPolynomialAddExhaustive(unittest.TestCase):
+    def setUp(self) -> None:
+        self.modulus = gf.get_modulus(8)
+
+    def test_add_exhaustive(self) -> None:
+        counts: MutableMapping[int, int] = collections.Counter()
+        for x in range(1 << 8):
+            for y in range(1 << 8):
+                counts[
+                    int(
+                        gf.ModularBinaryPolynomial(x, self.modulus)
+                        + gf.ModularBinaryPolynomial(y, self.modulus)
+                    )
+                ] += 1
+        for i in range(1 << 8):
+            with self.subTest(i=i):
+                self.assertEqual(counts[i], 256)
+
+
+class TestModularBinaryPolynomialMultiplyExhaustive(unittest.TestCase):
+    def setUp(self) -> None:
+        self.modulus = gf.get_modulus(8)
+
+    def test_add_exhaustive(self) -> None:
+        counts: MutableMapping[int, int] = collections.Counter()
+        for x in range(1 << 8):
+            for y in range(1 << 8):
+                counts[
+                    int(
+                        gf.ModularBinaryPolynomial(x, self.modulus)
+                        * gf.ModularBinaryPolynomial(y, self.modulus)
+                    )
+                ] += 1
+        for i in range(1, 1 << 8):
+            with self.subTest(i=i):
+                self.assertEqual(counts[i], 255)
+        with self.subTest(i=i):
+            self.assertEqual(counts[0], 511)
 
 
 class TestModularBinaryPolynomialInvertExhaustive(unittest.TestCase):
