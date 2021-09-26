@@ -68,6 +68,10 @@ def split(
     These points can be used to reconstruct the original member through Lagrange
     interpolation.
     """
+    if k < 1:
+        raise ValueError(f"Can't split into {k} shares")
+    if n < k:
+        raise ValueError(f"Requested {n} shares which is fewer than {k} required to recover")
     # from high degree to low degree
     coeffs = tuple(_random_elements(secret, k - 1, nonce)) + (secret,)
     result: list[tuple[GFE, GFE]] = []
