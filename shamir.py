@@ -1,3 +1,10 @@
+"""Shamir Secret Sharing over GF(2^n).
+
+Note: this implementation uses the hash of the secret to derive the coefficients
+of the polynomial. This reduces the security of the system to the security of
+the hash algorithm, SHAKE-256.
+"""
+
 import hashlib
 from collections.abc import Iterable, Iterator
 from typing import TypeVar
@@ -8,6 +15,11 @@ T = TypeVar("T")
 
 
 def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+    """Return fixed-length sequential chunks of the iterable.
+
+    If there aren't enough elements of the iterable to fill the last chunk, it
+    is silently dropped.
+    """
     return zip(*([iter(iterable)] * n))
 
 
@@ -15,7 +27,7 @@ def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
-def modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
+def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
     modulus = int(modulus)
     modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
     bits: list[int] = []
@@ -32,13 +44,13 @@ def modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
     )
 
 
-def random_elements(
+def _random_elements(
     secret: GFE, how_many: int, nonce: int = 0
 ) -> Iterator[GFE]:
     h = hashlib.shake_256()
     h.update(
         bytes(secret)
-        + modulus_bytes(secret.modulus)
+        + _modulus_bytes(secret.modulus)
         + how_many.to_bytes(4, "big")
         + nonce.to_bytes(4, "big")
     )
@@ -51,8 +63,13 @@ def random_elements(
 def split(
     secret: GFE, k: int, n: int, nonce: int = 0
 ) -> list[tuple[GFE, GFE]]:
+    """Split a member of GF(2^n) into some points (field element pairs).
+
+    These points can be used to reconstruct the original member through Lagrange
+    interpolation.
+    """
     # from high degree to low degree
-    coeffs = tuple(random_elements(secret, k - 1, nonce)) + (secret,)
+    coeffs = tuple(_random_elements(secret, k - 1, nonce)) + (secret,)
     result: list[tuple[GFE, GFE]] = []
     for i in map(secret.coerce, range(1, n + 1)):
         accum = secret.coerce(0)
@@ -64,6 +81,15 @@ def split(
 
 
 def recover(shares: Iterable[tuple[GFE, GFE]], nonce: int = 0) -> GFE:
+    """Recover the constant term of the polynomial determined by the given points.
+
+    The degree of the polynomial is determined by number of given points. Points
+    are field element pairs over GF(2^n). Fundamentally, this is Lagrange
+    interpolation.
+
+    This function expects the coefficients of the polynomial to have been
+    constructed by `split`. Raises `ValueError` otherwise.
+    """
     result: GFE
     k = 0
     n = 0

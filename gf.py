@@ -208,6 +208,8 @@ PolynomialType = TypeVar("PolynomialType", bound=BinaryPolynomial)
 
 
 class ModularBinaryPolynomial(Generic[PolynomialType]):
+    """An element of the field of binary polynomials, mod the primitive polynomial."""
+
     __slots__ = "_value", "_modulus"
     _value: PolynomialType
     _modulus: PolynomialType
@@ -233,6 +235,12 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         value: Union[PolynomialType, int, bytes],
         modulus: Union[PolynomialType, int, bytes],
     ) -> None:
+        """Store the value polynomial and modulus polynomial.
+
+        Coerce int/bytes as necessary. Reduce the value by the modulus.  Raises
+        TypeError if BinaryPolynomial implementation cannot be determined
+        automatically.
+        """
         if isinstance(modulus, (int, bytes)):
             if isinstance(value, (int, bytes)):
                 raise TypeError("Unknown underlying PolynomialType")
@@ -245,6 +253,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     def coerce(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
+        """Coerce an int, bytes, or BinaryPolynomial to a ModularBinaryPolynomial."""
         if isinstance(other, (self.polynomial_type, int, bytes)):
             return type(self)(self._value.coerce(other), self._modulus)
         if self._modulus != self._modulus.coerce(other._modulus):  # type: ignore # mypy fails to narrow
@@ -254,51 +263,61 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     def __add__(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
+        """Addition is the same as in the underlying BinaryPolynomial."""
         other = self.coerce(other)
         return type(self)(self._value + other._value, self._modulus)
 
     def __radd__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
+        """Addition is the same as in the underlying BinaryPolynomial. Coerce BinaryPolynomial/int/bytes."""
         return type(self)(other, self._modulus) + self
 
     def __neg__(self: SelfType) -> SelfType:
+        """Negation is the identity."""
         return self
 
     def __sub__(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
+        """Subtraction is the same as in the underlying BinaryPolynomial."""
         other = self.coerce(other)
         return self + -other
 
     def __rsub__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
+        """Subtraction is the same as in the underlying BinaryPolynomial. Coerce BinaryPolynomial/int/bytes."""
         return type(self)(other, self._modulus) - self
 
     def __mul__(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
+        """Multiplication is the same as BinaryPolynomial, but with a modular reduction."""
         other = self.coerce(other)
         return type(self)(self._value * other._value, self._modulus)
 
     def __rmul__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
+        """Multiplication is the same as BinaryPolynomial, but with a modular reduction. Coerce BinaryPolynomial/int/bytes."""
         return type(self)(other, self._modulus) * self
 
     def __truediv__(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
+        """Division is multiplication by the inverse of the denominator."""
         other = self.coerce(other)
         return self * ~other
 
     def __rtruediv__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
+        """Division is multiplication by the inverse of the denominator. Coerce BinaryPolynomial/int/bytes."""
         return type(self)(other, self._modulus) / self
 
     def __invert__(self: SelfType) -> SelfType:
+        """Inversion is performed by extended GCD over the BinaryPolynomial."""
         t: Union[PolynomialType, int] = 0
         t_new: Union[PolynomialType, int] = 1
         r = self._modulus
@@ -312,6 +331,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return type(self)(t, self._modulus)
 
     def __pow__(self: SelfType, other: Union[int, bytes]) -> SelfType:
+        """Exponentiation by an integer is performed by square-and-multiply."""
         if isinstance(other, bytes):
             other = int.from_bytes(other, "big")
         shifted = self
@@ -324,31 +344,43 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return result
 
     def bit_length(self) -> int:
+        """Length in bits of the field elements."""
         return self.modulus.bit_length() - 1
 
     def __len__(self) -> int:
+        """Length in bytes of the field elements."""
         return (self.bit_length() + 7) // 8
 
     def __bytes__(self) -> bytes:
+        """Big-endian byte encoding of the bit-field of the value.
+
+        The length is the same for all members of the field because this uses
+        the length of the modulus.
+        """
         # This is different from bytes(self._value) because it uses the length
         # of the modulus
         return int(self).to_bytes(len(self), "big")
 
     def __int__(self) -> int:
+        """Return the integer representation of the BinaryPolynomial."""
         return int(self._value)
 
     def __bool__(self) -> bool:
+        """Nonzero-ness of the BinaryPolynomial (congruence to zero)."""
         return bool(self._value)
 
     def __str__(self) -> str:
+        """Human-readable representation."""
         return f"{type(self).__name__}({bin(int(self._value))}, {bin(int(self._modulus))})"
 
     __repr__ = __str__
 
     def __hash__(self) -> int:
+        """ModularyBinaryPolynomial hashes the same as int."""
         return hash(int(self))
 
     def __eq__(self, other: object) -> bool:
+        """ModularBinaryPolynomials are equal if their values and moduli are equal."""
         if isinstance(other, (self.polynomial_type, int, bytes)):
             other = type(self)(self._value.coerce(other), self._modulus)
         if (
@@ -361,10 +393,12 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
 
     @property
     def modulus(self) -> PolynomialType:
+        """The modulus of the field."""
         return self._modulus
 
     @property
     def polynomial_type(self) -> Type[PolynomialType]:
+        """The underlying BinaryPolynomial type."""
         return type(self._value)
 
     del SelfType
