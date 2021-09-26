@@ -1,3 +1,5 @@
+"""Classes to support the pythonic manipulation of GF(2^n) elements."""
+
 from __future__ import annotations
 
 import warnings
@@ -55,7 +57,7 @@ class BinaryPolynomial:
         self._value = value
 
     def coerce(self: SelfType, other: Union[SelfType, int, bytes]) -> SelfType:
-        """Coerce a possibly-integer to a BinaryPolynomial."""
+        """Coerce an integer or bytes to a BinaryPolynomial."""
         if isinstance(other, (int, bytes)):
             return type(self)(other)
         return type(self)(other._value)
@@ -68,7 +70,7 @@ class BinaryPolynomial:
         return type(self)(self._value ^ other._value)
 
     def __radd__(self: SelfType, other: Union[int, bytes]) -> SelfType:
-        """Addition of polynomials over GF(2). Coerce integers."""
+        """Addition of polynomials over GF(2). Coerce int/bytes."""
         return type(self)(other) + self
 
     def __neg__(self: SelfType) -> SelfType:
@@ -83,7 +85,7 @@ class BinaryPolynomial:
         return self + -other
 
     def __rsub__(self: SelfType, other: Union[int, bytes]) -> SelfType:
-        """Subtraction of polynomials over GF(2) is addition. Coerce integers."""
+        """Subtraction of polynomials over GF(2) is addition. Coerce int/bytes."""
         return type(self)(other) - self
 
     def __mul__(
@@ -102,12 +104,13 @@ class BinaryPolynomial:
         return type(self)(p)
 
     def __rmul__(self: SelfType, other: Union[int, bytes]) -> SelfType:
-        """Multiplication of polynomials over GF(2). Coerce integers."""
+        """Multiplication of polynomials over GF(2). Coerce int/bytes."""
         return type(self)(other) * self
 
     def __divmod__(
         self: SelfType, other: Union[SelfType, int, bytes]
     ) -> tuple[SelfType, SelfType]:
+        """Quotient and remainder of division of polynomials over GF(2)."""
         other = self.coerce(other)
         numerator = self._value
         denominator = other._value
@@ -124,6 +127,7 @@ class BinaryPolynomial:
     def __rdivmod__(
         self: SelfType, other: Union[int, bytes]
     ) -> tuple[SelfType, SelfType]:
+        """Quotient and remainder of division of polynomials over GF(2). Coerce int/bytes."""
         return divmod(type(self)(other), self)
 
     def __floordiv__(
@@ -133,7 +137,7 @@ class BinaryPolynomial:
         return divmod(self, other)[0]
 
     def __rfloordiv__(self: SelfType, other: Union[int, bytes]) -> SelfType:
-        """Quotient after division of polynomials over GF(2). Coerce integers."""
+        """Quotient after division of polynomials over GF(2). Coerce int/bytes."""
         return type(self)(other) // self
 
     def __mod__(
@@ -143,10 +147,11 @@ class BinaryPolynomial:
         return divmod(self, other)[1]
 
     def __rmod__(self: SelfType, other: Union[int, bytes]) -> SelfType:
-        """Remainder after division of polynomials over GF(2). Coerce integers."""
+        """Remainder after division of polynomials over GF(2). Coerce int/bytes."""
         return type(self)(other) % self
 
     def __pow__(self: SelfType, other: Union[int, bytes]) -> SelfType:
+        """Exponentiation of a polynomial over GF(2) by an integer."""
         if isinstance(other, bytes):
             other = int.from_bytes(other, "big")
         shifted = self
@@ -159,18 +164,19 @@ class BinaryPolynomial:
         return result
 
     def __int__(self) -> int:
-        """Raw bit-field representation of the binary polynomial."""
+        """Raw bit-field representation."""
         return self._value
 
     def bit_length(self) -> int:
+        """Length in bits of the bit-field representation."""
         return int(self).bit_length()
 
     def __len__(self) -> int:
+        """Length in bytes of the bit-field."""
         return (self.bit_length() + 7) // 8
 
     def __bytes__(self) -> bytes:
-        if not self:
-            return b""
+        """Big-endian byte encoding of the bit-field."""
         return int(self).to_bytes(len(self), "big")
 
     def __bool__(self) -> bool:
