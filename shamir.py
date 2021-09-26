@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 from collections.abc import Iterable, Iterator
 from typing import TypeVar
 
