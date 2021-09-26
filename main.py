@@ -40,7 +40,7 @@ def split(args: Any) -> None:
         print(
             int(x),
             bip39.encode(bytes(y)),
-            sep=": ",
+            sep=",",
             file=sys.stdout,
             flush=True,
         )

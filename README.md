@@ -33,22 +33,22 @@ optional arguments:
 
 ```
 $ ./main.py split 'test test test test test test test test test test test junk' --needed 3 --shares 5
-1: early dad before body scissors couch private goddess riot boost season quit
-2: drop appear actress seat permit off cabin result chronic task purse column
-3: supply token siren ahead sad involve hidden arrest evidence blouse rebel wide
-4: document head evidence popular calm cram wine industry search two behind bounce
-5: suspect lock major hungry dignity tail monkey silk police collect ankle snack
+1,early dad before body scissors couch private goddess riot boost season quit
+2,drop appear actress seat permit off cabin result chronic task purse column
+3,supply token siren ahead sad involve hidden arrest evidence blouse rebel wide
+4,document head evidence popular calm cram wine industry search two behind bounce
+5,suspect lock major hungry dignity tail monkey silk police collect ankle snack
 ```
 
 ### Abbreviated
 
 ```
 $ ./main.py split 'tes tes tes tes tes tes tes tes tes tes tes junk' --needed 3 --shares 5
-1: early dad before body scissors couch private goddess riot boost season quit
-2: drop appear actress seat permit off cabin result chronic task purse column
-3: supply token siren ahead sad involve hidden arrest evidence blouse rebel wide
-4: document head evidence popular calm cram wine industry search two behind bounce
-5: suspect lock major hungry dignity tail monkey silk police collect ankle snack
+1,early dad before body scissors couch private goddess riot boost season quit
+2,drop appear actress seat permit off cabin result chronic task purse column
+3,supply token siren ahead sad involve hidden arrest evidence blouse rebel wide
+4,document head evidence popular calm cram wine industry search two behind bounce
+5,suspect lock major hungry dignity tail monkey silk police collect ankle snack
 ```
 
 ### Too much abbreviation
