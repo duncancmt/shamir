@@ -26,7 +26,7 @@ optional arguments:
 ```
 
 ```
-$ ./main.py split "test test test test test test test test test test test junk" --needed 3 --shares 5
+$ ./main.py split 'test test test test test test test test test test test junk' --needed 3 --shares 5
 1: early dad before body scissors couch private goddess riot boost season quit
 2: drop appear actress seat permit off cabin result chronic task purse column
 3: supply token siren ahead sad involve hidden arrest evidence blouse rebel wide
