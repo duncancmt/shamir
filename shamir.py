@@ -6,67 +6,53 @@ the hash algorithm, SHAKE-256.
 """
 
 import hashlib
-from collections.abc import Iterable, Iterator
-from typing import TypeVar
+import os
+from collections.abc import Collection, Iterable, Sequence
 
 import gf
-
-T = TypeVar("T")
-
-
-def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
-    """Return fixed-length sequential chunks of the iterable.
-
-    If there aren't enough elements of the iterable to fill the last chunk, it
-    is silently dropped.
-    """
-    return zip(*([iter(iterable)] * n))
-
 
 # Galois Field Element
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
-def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
-    modulus = int(modulus)
-    modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
-    bits: list[int] = []
-    while modulus:
-        bit = modulus.bit_length() - 1
-        bits.append(bit)
-        modulus &= ~(1 << bit)
-    if len(bits) != 3:
-        raise ValueError(f"Invalid modulus {bits}")
-    return (
-        bits[0].to_bytes(1, "big")
-        + bits[1].to_bytes(1, "big")
-        + bits[2].to_bytes(1, "big")
-    )
-
-
-def _random_elements(
-    secret: GFE, how_many: int, nonce: int = 0
-) -> Iterator[GFE]:
+def _hash_GFEs(x: Iterable[GFE]) -> GFE:
     h = hashlib.shake_256()
-    h.update(
-        bytes(secret)
-        + _modulus_bytes(secret.modulus)
-        + how_many.to_bytes(4, "big")
-        + nonce.to_bytes(4, "big")
-    )
-    return iter(
-        secret.coerce(int.from_bytes(x, "big"))
-        for x in grouper(h.digest(len(secret) * how_many), len(secret))
-    )
+    for i in x:
+        h.update(bytes(i))
+    return i.coerce(h.digest(len(i)))
+
+
+def _evaluate(poly: Iterable[GFE], x: GFE) -> GFE:
+    accum = x.coerce(0)
+    for coeff in poly:
+        accum *= x
+        accum += coeff
+    return accum
+
+
+# TODO: make x more broadly typed
+def _lagrange_interpolate(points: Iterable[tuple[GFE, GFE]], x: GFE) -> GFE:
+    result = x.coerce(0)
+    for i, (x_i, accum) in enumerate(points):
+        for j, (x_j, _) in enumerate(points):
+            if j == i:
+                continue
+            accum *= (x - x_j) / (x_i - x_j)
+        result += accum
+    return result
 
 
 def split(
-    secret: GFE, k: int, n: int, nonce: int = 0
-) -> list[tuple[GFE, GFE]]:
+    secret: GFE, k: int, n: int
+) -> tuple[list[GFE], list[GFE], list[GFE]]:
     """Split a member of GF(2^n) into some points (field element pairs).
 
     These points can be used to reconstruct the original member through Lagrange
     interpolation.
+
+    Returns the y-values corresponding to the x-values 1..n, and 2 lists of
+    auxilliary, public values required to verify the validity of each individual
+    share.
     """
     if k < 1:
         raise ValueError(f"Can't split into {k} shares")
@@ -74,47 +60,66 @@ def split(
         raise ValueError(
             f"Requested {n} shares which is fewer than {k} required to recover"
         )
-    # from high degree to low degree
-    coeffs = tuple(_random_elements(secret, k - 1, nonce)) + (secret,)
-    result: list[tuple[GFE, GFE]] = []
-    for i in map(secret.coerce, range(1, n + 1)):
-        accum = secret.coerce(0)
-        for coeff in coeffs:
-            accum *= i
-            accum += coeff
-        result.append((i, accum))
-    return result
+
+    # TODO: make deterministic
+    def _random_element() -> GFE:
+        accum = b""
+        while len(accum) < len(secret):
+            accum += os.getrandom(
+                len(secret) - len(accum), flags=os.GRND_RANDOM
+            )
+        return secret.coerce(accum)
+
+    # from high to low order
+    f_coeffs = [_random_element() for _ in range(k - 1)]
+    f_coeffs.append(secret)
+    g_coeffs = [_random_element() for _ in range(k)]
+
+    # from low to high x
+    f_values = [_evaluate(f_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
+    g_values = [_evaluate(g_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
+
+    v = list(map(_hash_GFEs, zip(f_values, g_values)))
+    r = _hash_GFEs(v)
+
+    # from high to low order
+    c = [b + r * a for a, b in zip(f_coeffs, g_coeffs)]
+
+    return f_values, v, c
 
 
-def recover(shares: Iterable[tuple[GFE, GFE]], nonce: int = 0) -> GFE:
-    """Recover the constant term of the polynomial determined by the given points.
+def verify_share(x: GFE, y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> bool:
+    y_g = _evaluate(c, x) - _hash_GFEs(v) * y_f
+    return v[int(x) - 1] == _hash_GFEs((y_f, y_g))
 
-    The degree of the polynomial is determined by number of given points. Points
-    are field element pairs over GF(2^n). Fundamentally, this is Lagrange
+
+def recover(
+    shares: Iterable[tuple[GFE, GFE]], v: Sequence[GFE], c: Collection[GFE]
+) -> GFE:
+    """Recover the constant term of the polynomial determined by the given shares.
+
+    The degree of the polynomial is inferred from the length of `c`. Shares are
+    points/field element pairs/GF(2^n)^2. Fundamentally, this is Lagrange
     interpolation.
 
-    This function expects the coefficients of the polynomial to have been
-    constructed by `split`. Raises `ValueError` otherwise.
+    This function verifies each share against the public check data `v` and
+    `c`. `v` must be long enough to accommodate the highest x-coordinate of
+    `shares`.
+
+    This function raises `ValueError` if too few shares pass validation against
+    `v` and `c`. The `e.args[1]` is the list of invalid shares.
     """
-    result: GFE
-    k = 0
-    n = 0
-    for x_i, accum in shares:
-        k += 1
-        n = max(int(x_i), n)
-        for x_j, _ in shares:
-            if x_j == x_i:
-                continue
-            accum *= x_j / (x_j - x_i)
-        try:
-            result += accum
-        except NameError:
-            result = accum
-    original_shares = split(result, k, n, nonce)
-    for i in shares:
-        if i not in original_shares:
-            raise ValueError("Invalid/malicious share")
-    return result
+
+    good_shares: list[tuple[GFE, GFE]] = []
+    bad_shares: list[tuple[GFE, GFE]] = []
+    for x, y in shares:
+        if verify_share(x, y, v, c):
+            good_shares.append((x, y))
+            if len(good_shares) >= len(c):
+                break
+    if len(good_shares) < len(c):
+        raise ValueError("Invalid shares", bad_shares)
+    return _lagrange_interpolate(good_shares, v[0].coerce(0))
 
 
 __all__ = ["split", "recover"]
