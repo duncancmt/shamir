@@ -6,11 +6,23 @@ the hash algorithm, SHAKE-256.
 """
 
 import hashlib
-import os
+import itertools
 from collections.abc import Collection, Iterable, Sequence
-from typing import Union
+from typing import TypeVar, Union
 
 import gf
+
+T = TypeVar("T")
+
+
+def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+    """Return fixed-length sequential chunks of the iterable.
+
+    If there aren't enough elements of the iterable to fill the last chunk, it
+    is silently dropped.
+    """
+    return zip(*([iter(iterable)] * n))
+
 
 # Galois Field Element
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
@@ -72,19 +84,17 @@ def split(
             f"Requested {n} shares which is fewer than {k} required to recover"
         )
 
-    # TODO: make deterministic
-    def _random_element() -> GFE:
-        accum = b""
-        while len(accum) < len(secret):
-            accum += os.getrandom(
-                len(secret) - len(accum), flags=os.GRND_RANDOM
-            )
-        return secret.coerce(accum)
+    h = hashlib.shake_256()
+    h.update(bytes(secret))
+    random_elements = [
+        secret.coerce(bytes(x))
+        for x in grouper(h.digest(len(secret) * (k * 2 - 1)), len(secret))
+    ]
 
     # from high to low order
-    f_coeffs = [_random_element() for _ in range(k - 1)]
+    f_coeffs = random_elements[: k - 1]
     f_coeffs.append(secret)
-    g_coeffs = [_random_element() for _ in range(k)]
+    g_coeffs = random_elements[k - 1 :]
 
     # from low to high x
     f_values = [_evaluate(f_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
