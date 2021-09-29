@@ -65,8 +65,28 @@ def _lagrange_interpolate(
     return result
 
 
+def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
+    modulus = int(modulus)
+    modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
+    bits: list[int] = []
+    while modulus:
+        bit = modulus.bit_length() - 1
+        bits.append(bit)
+        modulus &= ~(1 << bit)
+    if len(bits) != 3:
+        raise ValueError(f"Invalid modulus {bits}")
+    return (
+        bits[0].to_bytes(1, "big")
+        + bits[1].to_bytes(1, "big")
+        + bits[2].to_bytes(1, "big")
+    )
+
+
 def split(
-    secret: GFE, k: int, n: int
+    secret: GFE,
+    k: int,
+    n: int,
+    salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
 ) -> tuple[list[GFE], list[GFE], list[GFE]]:
     """Split a member of GF(2^n) into some points (field element pairs).
 
@@ -85,7 +105,13 @@ def split(
         )
 
     h = hashlib.shake_256()
-    h.update(bytes(secret))
+    h.update(
+        bytes(secret)
+        + _modulus_bytes(secret.modulus)
+        + k.to_bytes(4, "big")
+        + n.to_bytes(4, "big")
+        + bytes(secret.coerce(salt))
+    )
     random_elements = [
         secret.coerce(bytes(x))
         for x in grouper(h.digest(len(secret) * (k * 2 - 1)), len(secret))
