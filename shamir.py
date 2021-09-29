@@ -6,7 +6,6 @@ the hash algorithm, SHAKE-256.
 """
 
 import hashlib
-import itertools
 from collections.abc import Collection, Iterable, Sequence
 from typing import TypeVar, Union
 
