@@ -99,13 +99,17 @@ def split(
     return f_values, v, c
 
 
-def verify_share(x: GFE, y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> bool:
-    y_g = _evaluate(c, x) - _hash_GFEs(v) * y_f
-    return v[int(x) - 1] == _hash_GFEs((y_f, y_g))
+def verify_share(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
+    z = _hash_GFEs(v) * y_f
+    for x in range(1, len(v) + 1):
+        y_g = _evaluate(c, x) - z
+        if v[x - 1] == _hash_GFEs((y_f, y_g)):
+            return x
+    return 0
 
 
 def recover(
-    shares: Iterable[tuple[GFE, GFE]], v: Sequence[GFE], c: Collection[GFE]
+    shares: Iterable[GFE], v: Sequence[GFE], c: Collection[GFE]
 ) -> GFE:
     """Recover the constant term of the polynomial determined by the given shares.
 
@@ -122,12 +126,15 @@ def recover(
     """
 
     good_shares: list[tuple[GFE, GFE]] = []
-    bad_shares: list[tuple[GFE, GFE]] = []
-    for x, y in shares:
-        if verify_share(x, y, v, c):
-            good_shares.append((x, y))
-            if len(good_shares) >= len(c):
-                break
+    bad_shares: list[GFE] = []
+    for y in shares:
+        x = verify_share(y, v, c)
+        if x == 0:
+            bad_shares.append(y)
+        else:
+            good_shares.append((y.coerce(x), y))
+        if len(good_shares) == len(c):
+            break
     if len(good_shares) < len(c):
         raise ValueError("Invalid shares", bad_shares)
     return _lagrange_interpolate(good_shares, 0)
