@@ -38,14 +38,7 @@ def split(args: Any) -> None:
             file=sys.stdout,
             flush=True,
         )
-    json.dump(
-        {
-            "v": [to_mnemonic(v_i) for v_i in v],
-            "c": [to_mnemonic(c_i) for c_i in c],
-        },
-        sys.stdout,
-    )
-    sys.stdout.write("\n")
+    save_metadata(args, v, c)
 
 
 def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
@@ -53,6 +46,25 @@ def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
     v = [mnemonic(v_i) for v_i in metadata["v"]]
     c = [mnemonic(c_i) for c_i in metadata["c"]]
     return v, c
+
+
+def save_metadata(args: Any, v: list[GFE], c: list[GFE]) -> None:
+    json.dump(
+        {
+            "v": [to_mnemonic(v_i) for v_i in v],
+            "c": [to_mnemonic(c_i) for c_i in c],
+        },
+        args.file,
+    )
+
+
+def add_metadata_args(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--file",
+        type=argparse.FileType("r"),
+        help="File containing public share metadata",
+    )
 
 
 def verify(args: Any) -> None:
@@ -107,6 +119,11 @@ split_parser.add_argument(
     required=True,
     help="Number of shares required to recover the secret",
 )
+split_parser.add_argument(
+    "--file",
+    type=argparse.FileType("w"),
+    help="Write public verification metadata here",
+)
 split_parser.set_defaults(func=split)
 
 verify_parser = subparsers.add_parser(
@@ -118,12 +135,7 @@ verify_parser.add_argument(
     type=mnemonic,
     help="Mnemonic share produced from the original using `split`",
 )
-public_group = verify_parser.add_mutually_exclusive_group(required=True)
-public_group.add_argument(
-    "--file",
-    type=argparse.FileType("r"),
-    help="File containing public share metadata",
-)
+add_metadata_args(verify_parser)
 verify_parser.set_defaults(func=verify)
 
 recover_parser = subparsers.add_parser(
@@ -136,12 +148,7 @@ recover_parser.add_argument(
     type=mnemonic,
     help="Mnemonics produced from the original using `split`",
 )
-public_group = recover_parser.add_mutually_exclusive_group(required=True)
-public_group.add_argument(
-    "--file",
-    type=argparse.FileType("r"),
-    help="File containing public share metadata",
-)
+add_metadata_args(recover_parser)
 recover_parser.set_defaults(func=recover)
 
 args = parser.parse_args()
