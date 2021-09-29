@@ -19,6 +19,10 @@ def mnemonic(x: str) -> GFE:
     return x
 
 
+def to_mnemonic(x: GFE) -> str:
+    return bip39.encode(bytes(x))
+
+
 def int_and_mnemonic(arg: str) -> tuple[GFE, GFE]:
     x, y = arg.split(",")
     y = mnemonic(y)
@@ -45,8 +49,8 @@ def split(args: Any) -> None:
         )
     json.dump(
         {
-            "v": [list(bytes(v_i)) for v_i in v],
-            "c": [list(bytes(c_i)) for c_i in c],
+            "v": [to_mnemonic(v_i) for v_i in v],
+            "c": [to_mnemonic(c_i) for c_i in c],
         },
         sys.stdout,
     )
@@ -56,8 +60,8 @@ def split(args: Any) -> None:
 def recover(args: Any) -> None:
     shares: list[tuple[GFE, GFE]] = args.shares
     metadata = json.load(args.file)
-    v = list(map(shares[0][0].coerce, map(bytes, metadata["v"])))
-    c = list(map(shares[0][0].coerce, map(bytes, metadata["c"])))
+    v = [mnemonic(v_i) for v_i in metadata["v"]]
+    c = [mnemonic(c_i) for c_i in metadata["c"]]
     try:
         secret = shamir.recover(shares, v, c)
     except ValueError as e:
