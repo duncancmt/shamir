@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import sys
-from collections.abc import Iterable
 from typing import Any
 
 import bip39
@@ -30,30 +30,39 @@ def split(args: Any) -> None:
     secret: GFE = args.secret
     k: int = args.needed
     n: int = args.shares
-    nonce: int = args.nonce
     try:
-        shares = shamir.split(secret, k, n, nonce)
+        shares, v, c = shamir.split(secret, k, n)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
-        exit(1)
-    for x, y in shares:
+        sys.exit(1)
+    for x, y in zip(range(1, n + 1), shares):
         print(
-            int(x),
+            x,
             bip39.encode(bytes(y)),
             sep=",",
             file=sys.stdout,
             flush=True,
         )
+    json.dump(
+        {
+            "v": [list(bytes(v_i)) for v_i in v],
+            "c": [list(bytes(c_i)) for c_i in c],
+        },
+        sys.stdout,
+    )
+    sys.stdout.write("\n")
 
 
 def recover(args: Any) -> None:
-    shares: Iterable[tuple[GFE, GFE]] = args.shares
-    nonce: int = args.nonce
+    shares: list[tuple[GFE, GFE]] = args.shares
+    metadata = json.load(args.file)
+    v = list(map(shares[0][0].coerce, map(bytes, metadata["v"])))
+    c = list(map(shares[0][0].coerce, map(bytes, metadata["c"])))
     try:
-        secret = shamir.recover(shares, nonce)
+        secret = shamir.recover(shares, v, c)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
-        exit(1)
+        sys.exit(1)
     print(
         bip39.encode(bytes(secret)),
         file=sys.stdout,
@@ -104,6 +113,13 @@ recover_parser.add_argument(
     type=int_and_mnemonic,
     metavar="NUMBER,MNEMONIC",
     help="Numbered mnemonics produced from the original using `split`",
+)
+public_group = recover_parser.add_mutually_exclusive_group(required=True)
+public_group.add_argument(
+    "--file",
+    type=argparse.FileType("r"),
+    default=sys.stdin,
+    help="File containing public share metadata",
 )
 recover_parser.set_defaults(func=recover)
 
