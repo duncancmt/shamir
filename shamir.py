@@ -127,7 +127,7 @@ def split(
 
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    v = list(map(_hash_GFEs, zip(f_values, g_values)))
+    v = [_hash_GFEs((y_f, y_g)) for y_f, y_g in zip(f_values, g_values)]
     r = _hash_GFEs(v)
 
     # from high to low order
@@ -137,6 +137,13 @@ def split(
 
 
 def verify(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
+    """Check whether a alleged secret share belongs to a group of shares.
+
+    The group of shares is specified by the public `v` and `c` values returned
+    by `split`. If the share belongs to the group, this returns the x value
+    corresponding to the share. If the share does not belong to the group, this
+    returns 0.
+    """
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
     z = _hash_GFEs(v) * y_f
