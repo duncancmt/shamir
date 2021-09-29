@@ -23,11 +23,16 @@ def _hash_GFEs(x: Iterable[GFE]) -> GFE:
     return i.coerce(h.digest(len(i)))
 
 
-def _evaluate(poly: Iterable[GFE], x: GFE) -> GFE:
-    accum = x.coerce(0)
+def _evaluate(
+    poly: Iterable[GFE], x: Union[GFE, gf.BinaryPolynomial, int, bytes]
+) -> GFE:
+    accum: GFE
     for coeff in poly:
-        accum *= x
-        accum += coeff
+        try:
+            accum *= x
+            accum += coeff
+        except NameError:
+            accum = coeff
     return accum
 
 
