@@ -23,13 +23,6 @@ def to_mnemonic(x: GFE) -> str:
     return bip39.encode(bytes(x))
 
 
-def int_and_mnemonic(arg: str) -> tuple[GFE, GFE]:
-    x, y = arg.split(",")
-    y = mnemonic(y)
-    x = y.coerce(int(x))
-    return x, y
-
-
 def split(args: Any) -> None:
     secret: GFE = args.secret
     k: int = args.needed
@@ -39,11 +32,9 @@ def split(args: Any) -> None:
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         sys.exit(1)
-    for x, y in zip(range(1, n + 1), shares):
+    for share in shares:
         print(
-            x,
-            bip39.encode(bytes(y)),
-            sep=",",
+            bip39.encode(bytes(share)),
             file=sys.stdout,
             flush=True,
         )
@@ -57,11 +48,22 @@ def split(args: Any) -> None:
     sys.stdout.write("\n")
 
 
-def recover(args: Any) -> None:
-    shares: list[tuple[GFE, GFE]] = args.shares
+def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
     metadata = json.load(args.file)
     v = [mnemonic(v_i) for v_i in metadata["v"]]
     c = [mnemonic(c_i) for c_i in metadata["c"]]
+    return v, c
+
+
+def verify(args: Any) -> None:
+    share: GFE = args.share
+    v, c = get_metadata(args)
+    sys.exit(bool(shamir.verify_share(share, v, c)))
+
+
+def recover(args: Any) -> None:
+    shares: list[GFE] = args.shares
+    v, c = get_metadata(args)
     try:
         secret = shamir.recover(shares, v, c)
     except ValueError as e:
@@ -107,6 +109,23 @@ split_parser.add_argument(
 )
 split_parser.set_defaults(func=split)
 
+verify_parser = subparsers.add_parser(
+    "verify",
+    help="Verify that a share belongs to a secret using the public metadata",
+)
+verify_parser.add_argument(
+    "share",
+    type=mnemonic,
+    help="Mnemonic share produced from the original using `split`",
+)
+public_group = verify_parser.add_mutually_exclusive_group(required=True)
+public_group.add_argument(
+    "--file",
+    type=argparse.FileType("r"),
+    help="File containing public share metadata",
+)
+
+
 recover_parser = subparsers.add_parser(
     "recover",
     help="Given numbered BIP-0039 mnemonic shares, recover the original mnemonic they were split from",
@@ -114,15 +133,13 @@ recover_parser = subparsers.add_parser(
 recover_parser.add_argument(
     "shares",
     nargs="+",
-    type=int_and_mnemonic,
-    metavar="NUMBER,MNEMONIC",
-    help="Numbered mnemonics produced from the original using `split`",
+    type=mnemonic,
+    help="Mnemonics produced from the original using `split`",
 )
 public_group = recover_parser.add_mutually_exclusive_group(required=True)
 public_group.add_argument(
     "--file",
     type=argparse.FileType("r"),
-    default=sys.stdin,
     help="File containing public share metadata",
 )
 recover_parser.set_defaults(func=recover)
