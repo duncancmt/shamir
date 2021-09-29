@@ -27,8 +27,9 @@ def split(args: Any) -> None:
     secret: GFE = args.secret
     k: int = args.needed
     n: int = args.shares
+    salt: int = args.salt
     try:
-        shares, v, c = shamir.split(secret, k, n)
+        shares, v, c = shamir.split(secret, k, n, salt)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         sys.exit(1)
@@ -80,6 +81,10 @@ def recover(args: Any) -> None:
         secret = shamir.recover(shares, v, c)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
+        for share in e.args[1]:
+            print(
+                "\t" + bip39.encode(bytes(share)), file=sys.stderr, flush=True
+            )
         sys.exit(1)
     print(
         bip39.encode(bytes(secret)),
@@ -91,10 +96,10 @@ def recover(args: Any) -> None:
 # fmt: off
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--nonce",
+    "--salt",
     type=int,
     default=0,
-    help="Nonce to distinguish multiple splits of the same secret",
+    help="Salt to distinguish multiple splits of the same secret",
 )
 subparsers = parser.add_subparsers(required=True)
 
@@ -122,13 +127,14 @@ split_parser.add_argument(
 split_parser.add_argument(
     "--file",
     type=argparse.FileType("w"),
+    default=sys.stdout,
     help="Write public verification metadata here",
 )
 split_parser.set_defaults(func=split)
 
 verify_parser = subparsers.add_parser(
     "verify",
-    help="Verify that a share belongs to a secret using the public metadata",
+    help="Verify that a BIP-0039 mnemonic share belongs to a secret using the public metadata",
 )
 verify_parser.add_argument(
     "share",
@@ -140,7 +146,7 @@ verify_parser.set_defaults(func=verify)
 
 recover_parser = subparsers.add_parser(
     "recover",
-    help="Given numbered BIP-0039 mnemonic shares, recover the original mnemonic they were split from",
+    help="Given BIP-0039 mnemonic shares, recover the original mnemonic they were split from",
 )
 recover_parser.add_argument(
     "shares",
