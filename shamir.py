@@ -135,7 +135,7 @@ def split(
     return f_values, v, c
 
 
-def verify_share(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
+def verify(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
     z = _hash_GFEs(v) * y_f
     for x in range(1, len(v) + 1):
         y_g = _evaluate(c, x) - z
@@ -164,7 +164,7 @@ def recover(
     good_shares: list[tuple[GFE, GFE]] = []
     bad_shares: list[GFE] = []
     for y in shares:
-        x = verify_share(y, v, c)
+        x = verify(y, v, c)
         if x == 0:
             bad_shares.append(y)
         else:
@@ -176,4 +176,4 @@ def recover(
     return _lagrange_interpolate(good_shares, 0)
 
 
-__all__ = ["split", "recover"]
+__all__ = ["split", "verify", "recover"]

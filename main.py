@@ -58,7 +58,7 @@ def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
 def verify(args: Any) -> None:
     share: GFE = args.share
     v, c = get_metadata(args)
-    sys.exit(bool(shamir.verify_share(share, v, c)))
+    sys.exit(bool(shamir.verify(share, v, c)))
 
 
 def recover(args: Any) -> None:
