@@ -245,10 +245,14 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
             if isinstance(value, (int, bytes)):
                 raise TypeError("Unknown underlying PolynomialType")
             modulus = type(value)(modulus)
-        if isinstance(value, (int, bytes)):
+        self._modulus = modulus
+        if isinstance(value, int):
+            value = type(modulus)(value)
+        elif isinstance(value, bytes):
+            if len(value) != len(self):
+                raise ValueError("Length mismatch")
             value = type(modulus)(value)
         self._value = value % modulus
-        self._modulus = modulus
 
     def coerce(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
