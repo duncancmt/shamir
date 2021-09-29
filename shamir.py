@@ -8,6 +8,7 @@ the hash algorithm, SHAKE-256.
 import hashlib
 import os
 from collections.abc import Collection, Iterable, Sequence
+from typing import Union
 
 import gf
 
@@ -30,15 +31,20 @@ def _evaluate(poly: Iterable[GFE], x: GFE) -> GFE:
     return accum
 
 
-# TODO: make x more broadly typed
-def _lagrange_interpolate(points: Iterable[tuple[GFE, GFE]], x: GFE) -> GFE:
-    result = x.coerce(0)
+def _lagrange_interpolate(
+    points: Iterable[tuple[GFE, GFE]],
+    x: Union[GFE, gf.BinaryPolynomial, int, bytes],
+) -> GFE:
+    result: GFE
     for i, (x_i, accum) in enumerate(points):
         for j, (x_j, _) in enumerate(points):
             if j == i:
                 continue
             accum *= (x - x_j) / (x_i - x_j)
-        result += accum
+        try:
+            result += accum
+        except NameError:
+            result = accum
     return result
 
 
@@ -119,7 +125,7 @@ def recover(
                 break
     if len(good_shares) < len(c):
         raise ValueError("Invalid shares", bad_shares)
-    return _lagrange_interpolate(good_shares, v[0].coerce(0))
+    return _lagrange_interpolate(good_shares, 0)
 
 
 __all__ = ["split", "recover"]
