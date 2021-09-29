@@ -58,7 +58,7 @@ def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
 def verify(args: Any) -> None:
     share: GFE = args.share
     v, c = get_metadata(args)
-    sys.exit(bool(shamir.verify(share, v, c)))
+    sys.exit(not shamir.verify(share, v, c))
 
 
 def recover(args: Any) -> None:
@@ -124,7 +124,7 @@ public_group.add_argument(
     type=argparse.FileType("r"),
     help="File containing public share metadata",
 )
-
+verify_parser.set_defaults(func=verify)
 
 recover_parser = subparsers.add_parser(
     "recover",
