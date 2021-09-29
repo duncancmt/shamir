@@ -1,8 +1,9 @@
 """Shamir Secret Sharing over GF(2^n).
 
-Note: this implementation uses the hash of the secret to derive the coefficients
-of the polynomial. This reduces the security of the system to the security of
-the hash algorithm, SHAKE-256.
+Note: this implementation uses the hash-based verification scheme described in
+https://doi.org/10.1016/j.ins.2014.03.025 and it uses the hash of the secret to
+derive the coefficients of the polynomial. Each of these changes reduces the
+security of the system to the security of the hash algorithm, SHAKE-256.
 """
 
 import hashlib
