@@ -125,6 +125,8 @@ def split(
     f_values = [_evaluate(f_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
     g_values = [_evaluate(g_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
 
+    # This is the hash-based verification scheme described in
+    # https://doi.org/10.1016/j.ins.2014.03.025
     v = list(map(_hash_GFEs, zip(f_values, g_values)))
     r = _hash_GFEs(v)
 
@@ -135,6 +137,8 @@ def split(
 
 
 def verify(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
+    # This is the hash-based verification scheme described in
+    # https://doi.org/10.1016/j.ins.2014.03.025
     z = _hash_GFEs(v) * y_f
     for x in range(1, len(v) + 1):
         y_g = _evaluate(c, x) - z
