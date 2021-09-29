@@ -161,18 +161,18 @@ def recover(
     `v` and `c`. The `e.args[1]` is the list of invalid shares.
     """
 
-    good_shares: list[tuple[GFE, GFE]] = []
+    good_shares: set[tuple[GFE, GFE]] = set()
     bad_shares: list[GFE] = []
     for y in shares:
         x = verify(y, v, c)
         if x == 0:
             bad_shares.append(y)
         else:
-            good_shares.append((y.coerce(x), y))
+            good_shares.add((y.coerce(x), y))
         if len(good_shares) == len(c):
             break
     if len(good_shares) < len(c):
-        raise ValueError("Invalid shares", bad_shares)
+        raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
     return _lagrange_interpolate(good_shares, 0)
 
 
