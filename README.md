@@ -35,23 +35,30 @@ optional arguments:
 
 ```
 $ ./main.py split 'test test test test test test test test test test test junk' --needed 3 --shares 5
-welcome protect burst shine vote dose enact hundred atom worth scheme zebra
-atom text certain wife three virus level endorse bus drill brave normal
-chuckle prosper top they slice hedgehog bind west song gauge afford ball
-aspect egg sing stadium arch steel pride convince story logic royal divide
-close curious amount sister cannon enroll detect palace also peanut phone return
-{"v": [[22, 83, 183, 179, 77, 22, 204, 1, 216, 133, 143, 215, 183, 110, 125, 18], [83, 234, 0, 89, 69, 143, 241, 151, 1, 113, 178, 158, 82, 45, 98, 28], [91, 146, 32, 253, 29, 161, 247, 202, 141, 99, 175, 174, 122, 214, 138, 62], [5, 131, 205, 204, 24, 192, 98, 203, 113, 65, 231, 132, 14, 192, 18, 206], [13, 82, 195, 20, 102, 197, 230, 122, 105, 150, 240, 33, 35, 62, 241, 27]], "c": [[156, 190, 176, 202, 140, 215, 111, 131, 61, 35, 88, 231, 101, 84, 98, 216], [15, 176, 167, 166, 218, 100, 117, 154, 144, 111, 191, 30, 197, 32, 255, 20], [164, 188, 73, 65, 223, 36, 25, 213, 16, 60, 56, 70, 44, 141, 83, 135]]}
+illegal bullet bone shuffle parrot achieve resemble accident bundle depend world another
+wild nice potato alone umbrella purse vacant height card effort cactus sell
+few feel host bulk need ignore obvious reform today phrase acquire rate
+idea history surge soul meadow armor just nothing tenant peasant song father
+ten pulse broken struggle wagon stick balance else burst elder unfair capital
+{"v": [[65, 209, 18, 109, 233, 218, 160, 191, 79, 88, 122, 73, 76, 158, 58, 48], [13, 90, 243, 220, 5, 138, 243, 123, 190, 74, 200, 120, 132, 230, 238, 77], [154, 143, 61, 185, 16, 178, 249, 69, 112, 81, 159, 167, 239, 244, 190, 134], [45, 147, 78, 199, 246, 214, 17, 174, 117, 139, 152, 146, 94, 48, 156, 44], [236, 196, 65, 188, 21, 113, 42, 218, 94, 125, 184, 35, 84, 53, 241, 131]], "c": [[74, 26, 185, 243, 234, 239, 58, 151, 6, 221, 22, 131, 148, 192, 93, 85], [26, 199, 252, 108, 232, 200, 89, 130, 33, 66, 227, 224, 192, 37, 188, 107], [27, 181, 166, 192, 53, 94, 105, 101, 160, 60, 66, 169, 77, 252, 125, 239]]}
 ```
+
+Distribute the mnemonics _privately_ to the shareholders. The JSON blob at the
+end should be published somewhere conspicuous so that the shareholders can
+publicly agree on its value and verify their shares against it. It is also
+needed during the secret recovery step, so it should be retained durably
+somewhere. Publishing it to IPFS and storing it durably in Filecoin seems like a
+good solution.
 
 ### Abbreviated
 
 ```
 $ ./main.py split 'tes tes tes tes tes tes tes tes tes tes tes junk' --needed 3 --shares 5 --file=meta.json
-welcome protect burst shine vote dose enact hundred atom worth scheme zebra
-atom text certain wife three virus level endorse bus drill brave normal
-chuckle prosper top they slice hedgehog bind west song gauge afford ball
-aspect egg sing stadium arch steel pride convince story logic royal divide
-close curious amount sister cannon enroll detect palace also peanut phone return
+illegal bullet bone shuffle parrot achieve resemble accident bundle depend world another
+wild nice potato alone umbrella purse vacant height card effort cactus sell
+few feel host bulk need ignore obvious reform today phrase acquire rate
+idea history surge soul meadow armor just nothing tenant peasant song father
+ten pulse broken struggle wagon stick balance else burst elder unfair capital
 ```
 
 ### Too much abbreviation
@@ -73,7 +80,7 @@ main.py split: error: argument secret: invalid mnemonic value: 'test test test t
 ## Verify
 
 ```
-$ ./main.py verify 'welcome protect burst shine vote dose enact hundred atom worth scheme zebra' --file=meta.json ; echo $?
+$ ./main.py verify 'illegal bullet bone shuffle parrot achieve resemble accident bundle depend world another' --file=meta.json ; echo $?
 0
 ```
 
@@ -103,17 +110,17 @@ mnemonic words. As long as it's unambiguous, the program will accept it. Order
 also doesn't matter.
 
 ```
-$ ./main.py recover --file=meta.json 'wel prot burs shin vot dos enac hundred atom worth scheme zebr' \
-> 'asp egg sing stadium arch stee prid convince stor log roya divi' \
-> 'chuckle pros top they slic hed bind wes song gauge affo ball'
+$ ./main.py recover --file=meta.json 'ille bull bone shu parrot ach rese acci bund depend worl ano' \
+> 'idea his surge soul mead armo just noth tena peasant son fath' \
+> 'few feel host bulk nee ign obvious refo toda phr acquire rate'
 test test test test test test test test test test test junk
 ```
 
 ### Not enough shares
 
 ```
-$ ./main.py recover --file=meta.json 'wel prot burs shin vot dos enac hundred atom worth scheme zebr' \
-> 'asp egg sing stadium arch stee prid convince stor log roya divi'
+$ ./main.py recover --file=meta.json 'ille bull bone shu parrot ach rese acci bund depend worl ano' \
+> 'idea his surge soul mead armo just noth tena peasant son fath'
 Too few valid shares. Invalid shares:
 ```
 
@@ -130,9 +137,9 @@ Too few valid shares. Invalid shares:
 ### Bad checksum
 
 ```
-$ ./main.py recover --file=meta.json 'wel prot burs shin vot dos enac hundred atom worth scheme zebr' \
-> 'asp egg sing stadium arch stee prid convince stor log roya divi' \
-> 'chuckle pros top they slic hed bind wes song gauge affo abandon'
+$ ./main.py recover --file=meta.json 'ille bull bone shu parrot ach rese acci bund depend worl ano' \
+> 'idea his surge soul mead armo just noth tena peasant son fath' \
+> 'few feel host bulk nee ign obvious refo toda phr acquire abandon'
 usage: main.py recover [-h] --file FILE shares [shares ...]
-main.py recover: error: argument shares: invalid mnemonic value: 'chuckle pros top they slic hed bind wes song gauge affo abandon'
+main.py recover: error: argument shares: invalid mnemonic value: 'few feel host bulk nee ign obvious refo toda phr acquire abandon'
 ```
