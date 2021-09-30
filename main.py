@@ -35,7 +35,7 @@ def split(args: Any) -> None:
         sys.exit(1)
     for share in shares:
         print(
-            bip39.encode(bytes(share)),
+            to_mnemonic(share),
             file=sys.stdout,
             flush=True,
         )
@@ -44,16 +44,23 @@ def split(args: Any) -> None:
 
 def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
     metadata = json.load(args.file)
-    v = [mnemonic(v_i) for v_i in metadata["v"]]
-    c = [mnemonic(c_i) for c_i in metadata["c"]]
+    modulus = gf.get_modulus(len(metadata["v"][0]) * 8)
+    v = [
+        gf.ModularBinaryPolynomial(bytes(v_i), modulus)
+        for v_i in metadata["v"]
+    ]
+    c = [
+        gf.ModularBinaryPolynomial(bytes(c_i), modulus)
+        for c_i in metadata["c"]
+    ]
     return v, c
 
 
 def save_metadata(args: Any, v: list[GFE], c: list[GFE]) -> None:
     json.dump(
         {
-            "v": [to_mnemonic(v_i) for v_i in v],
-            "c": [to_mnemonic(c_i) for c_i in c],
+            "v": [list(bytes(v_i)) for v_i in v],
+            "c": [list(bytes(c_i)) for c_i in c],
         },
         args.file,
     )
@@ -82,12 +89,10 @@ def recover(args: Any) -> None:
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         for share in e.args[1]:
-            print(
-                "\t" + bip39.encode(bytes(share)), file=sys.stderr, flush=True
-            )
+            print("\t" + to_mnemonic(share), file=sys.stderr, flush=True)
         sys.exit(1)
     print(
-        bip39.encode(bytes(secret)),
+        to_mnemonic(secret),
         file=sys.stdout,
         flush=True,
     )
