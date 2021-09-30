@@ -30,6 +30,8 @@ GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 def _hash_GFEs(x: Iterable[GFE]) -> GFE:
+    # This function makes no attempt to represent the field or to check that the
+    # field is the same.
     h = hashlib.shake_256()
     for i in x:
         h.update(bytes(i))
