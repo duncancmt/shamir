@@ -7,7 +7,8 @@ security of the system to the security of the hash algorithm, SHAKE-256.
 """
 
 import hashlib
-from collections.abc import Collection, Iterable, Sequence
+import itertools
+from collections.abc import Collection, Iterable
 from typing import TypeVar, Union
 
 import gf
@@ -130,14 +131,13 @@ def split(
     # https://doi.org/10.1016/j.ins.2014.03.025
     v = [_hash_GFEs((y_f, y_g)) for y_f, y_g in zip(f_values, g_values)]
     r = _hash_GFEs(v)
-
     # from high to low order
     c = [b + r * a for a, b in zip(f_coeffs, g_coeffs)]
 
     return f_values, v, c
 
 
-def verify(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
+def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
     """Check whether a alleged secret share belongs to a group of shares.
 
     The group of shares is specified by the public `v` and `c` values returned
@@ -148,15 +148,15 @@ def verify(y_f: GFE, v: Sequence[GFE], c: Iterable[GFE]) -> int:
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
     z = _hash_GFEs(v) * y_f
-    for x in range(1, len(v) + 1):
+    for x, v_i in zip(itertools.count(1), v):
         y_g = _evaluate(c, x) - z
-        if v[x - 1] == _hash_GFEs((y_f, y_g)):
+        if v_i == _hash_GFEs((y_f, y_g)):
             return x
     return 0
 
 
 def recover(
-    shares: Iterable[GFE], v: Sequence[GFE], c: Collection[GFE]
+    shares: Iterable[GFE], v: Iterable[GFE], c: Collection[GFE]
 ) -> GFE:
     """Recover the constant term of the polynomial determined by the given shares.
 
@@ -164,10 +164,7 @@ def recover(
     points/field element pairs/GF(2^n)^2. Fundamentally, this is Lagrange
     interpolation.
 
-    This function verifies each share against the public check data `v` and
-    `c`. `v` must be long enough to accommodate the highest x-coordinate of
-    `shares`.
-
+    This function verifies each share against the public check data `v` and `c`.
     This function raises `ValueError` if too few shares pass validation against
     `v` and `c`. The `e.args[1]` is the list of invalid shares.
     """
