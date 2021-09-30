@@ -30,12 +30,18 @@ GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 def _hash_GFEs(x: Iterable[GFE]) -> GFE:
-    # This function makes no attempt to represent the field or to check that the
-    # field is the same.
     h = hashlib.shake_256()
+    modulus: gf.BinaryPolynomial
     for i in x:
+        try:
+            if i.modulus != modulus:
+                raise ValueError("Different fields")
+        except NameError:
+            modulus = i.modulus
+            h.update(b"\xff" + _modulus_bytes(modulus))
         h.update(bytes(i))
-    return i.coerce(h.digest(len(i)))
+    byte_length = (modulus.bit_length() + 6) // 8
+    return gf.ModularBinaryPolynomial(h.digest(byte_length), modulus)
 
 
 def _evaluate(
@@ -109,10 +115,11 @@ def split(
 
     h = hashlib.shake_256()
     h.update(
-        bytes(secret)
+        b"\x00"
         + _modulus_bytes(secret.modulus)
         + k.to_bytes(4, "big")
         + n.to_bytes(4, "big")
+        + bytes(secret)
         + bytes(secret.coerce(salt))
     )
     random_elements = [
@@ -131,7 +138,7 @@ def split(
 
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    v = [_hash_GFEs((y_f, y_g)) for y_f, y_g in zip(f_values, g_values)]
+    v = [_hash_GFEs(ys) for ys in zip(f_values, g_values)]
     r = _hash_GFEs(v)
     # from high to low order
     c = [b + r * a for a, b in zip(f_coeffs, g_coeffs)]
