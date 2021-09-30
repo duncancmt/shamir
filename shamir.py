@@ -29,6 +29,23 @@ def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
+def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
+    modulus = int(modulus)
+    modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
+    bits: list[int] = []
+    while modulus:
+        bit = modulus.bit_length() - 1
+        bits.append(bit)
+        modulus &= ~(1 << bit)
+    if len(bits) != 3:
+        raise ValueError(f"Invalid modulus {bits}")
+    return (
+        bits[0].to_bytes(1, "big")
+        + bits[1].to_bytes(1, "big")
+        + bits[2].to_bytes(1, "big")
+    )
+
+
 def _hash_GFEs(x: Iterable[GFE]) -> GFE:
     h = hashlib.shake_256()
     modulus: gf.BinaryPolynomial
@@ -55,40 +72,6 @@ def _evaluate(
         except NameError:
             accum = coeff
     return accum
-
-
-def _lagrange_interpolate(
-    points: Iterable[tuple[GFE, GFE]],
-    x: Union[GFE, gf.BinaryPolynomial, int, bytes],
-) -> GFE:
-    result: GFE
-    for i, (x_i, accum) in enumerate(points):
-        for j, (x_j, _) in enumerate(points):
-            if j == i:
-                continue
-            accum *= (x - x_j) / (x_i - x_j)
-        try:
-            result += accum
-        except NameError:
-            result = accum
-    return result
-
-
-def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
-    modulus = int(modulus)
-    modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
-    bits: list[int] = []
-    while modulus:
-        bit = modulus.bit_length() - 1
-        bits.append(bit)
-        modulus &= ~(1 << bit)
-    if len(bits) != 3:
-        raise ValueError(f"Invalid modulus {bits}")
-    return (
-        bits[0].to_bytes(1, "big")
-        + bits[1].to_bytes(1, "big")
-        + bits[2].to_bytes(1, "big")
-    )
 
 
 def split(
@@ -162,6 +145,23 @@ def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
         if v_i == _hash_GFEs((y_f, y_g)):
             return x
     return 0
+
+
+def _lagrange_interpolate(
+    points: Iterable[tuple[GFE, GFE]],
+    x: Union[GFE, gf.BinaryPolynomial, int, bytes],
+) -> GFE:
+    result: GFE
+    for i, (x_i, accum) in enumerate(points):
+        for j, (x_j, _) in enumerate(points):
+            if j == i:
+                continue
+            accum *= (x - x_j) / (x_i - x_j)
+        try:
+            result += accum
+        except NameError:
+            result = accum
+    return result
 
 
 def recover(
