@@ -79,7 +79,11 @@ def decode(words: str) -> bytes:
     entropy_bits = len(raw) * 11 - checksum_bits
     raw = functools.reduce(
         operator.or_,
-        (x << i for i, x in zip(range((len(raw) - 1) * 11, -1, -11), raw)),
+        map(
+            operator.lshift,
+            reversed(raw),  # big endian
+            range(0, (len(raw) - 1) * 11 + 1, 11),
+        ),
     )
     entropy = (raw >> checksum_bits).to_bytes(entropy_bits // 8, "big")
     mask = (1 << checksum_bits) - 1
