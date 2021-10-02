@@ -55,7 +55,7 @@ def _hash_GFEs(x: Iterable[GFE]) -> GFE:
                 raise ValueError("Different fields")
         except NameError:
             modulus = i.modulus
-            h.update(_modulus_bytes(modulus))
+            h.update(b"\xff" + _modulus_bytes(modulus))
         h.update(bytes(i))
     byte_length = (modulus.bit_length() + 6) // 8
     return gf.ModularBinaryPolynomial(h.digest(byte_length), modulus)
@@ -101,10 +101,13 @@ def split(
 
     h = hashlib.shake_256()
     h.update(
-        bytes(_hash_GFEs(secret))
+        b"\x00"
+        + _modulus_bytes(secret[0].modulus)
+        + bytes(secret[0])
         + bytes(coerce(salt))
         + k.to_bytes(4, "big")
         + n.to_bytes(4, "big")
+        + (bytes(secret[1]) if len(secret) > 1 else b"")
     )
     random_elements = [
         coerce(bytes(x))
