@@ -79,7 +79,7 @@ def split(
     k: int,
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
-) -> tuple[list[GFE], list[GFE], list[GFE]]:
+) -> tuple[tuple[GFE, ...], tuple[GFE, ...], tuple[GFE, ...]]:
     """Split a member of GF(2^n) into some points (field element pairs).
 
     These points can be used to reconstruct the original member through Lagrange
@@ -109,28 +109,28 @@ def split(
         + n.to_bytes(4, "big")
         + (bytes(secret[1]) if len(secret) > 1 else b"")
     )
-    random_elements = [
+    random_elements = tuple(
         coerce(bytes(x))
         for x in grouper(
             h.digest(byte_length * (2 * k - len(secret))), byte_length
         )
-    ]
+    )
 
     # from high to low order
     f_coeffs = random_elements[: k - len(secret)]
     g_coeffs = random_elements[len(f_coeffs) :]
-    f_coeffs = list(secret[1:]) + f_coeffs + list(secret[:1])
+    f_coeffs = secret[1:] + f_coeffs + secret[:1]
 
     # from low to high x
-    f_values = [_evaluate(f_coeffs, coerce(x)) for x in range(1, n + 1)]
-    g_values = [_evaluate(g_coeffs, coerce(x)) for x in range(1, n + 1)]
+    f_values = tuple(_evaluate(f_coeffs, coerce(x)) for x in range(1, n + 1))
+    g_values = tuple(_evaluate(g_coeffs, coerce(x)) for x in range(1, n + 1))
 
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    v = [_hash_GFEs(ys) for ys in zip(f_values, g_values)]
+    v = tuple(_hash_GFEs(ys) for ys in zip(f_values, g_values))
     r = _hash_GFEs(v)
     # from high to low order
-    c = [b + r * a for a, b in zip(f_coeffs, g_coeffs)]
+    c = tuple(b + r * a for a, b in zip(f_coeffs, g_coeffs))
 
     return f_values, v, c
 
