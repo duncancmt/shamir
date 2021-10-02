@@ -10,6 +10,8 @@ import hashlib
 import itertools
 from collections.abc import Collection, Iterable
 from typing import TypeVar, Union
+import functools
+import operator
 
 import gf
 
@@ -174,14 +176,12 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
             old = new
         return old
 
-    result: list[GFE] = []
-    for x_i, y_i in points:
-        for j, coeff in enumerate(lagrange_poly(x_i)):
-            term = y_i * coeff
-            try:
-                result[j] += term
-            except IndexError:
-                result.append(term)
+    partials = [
+        [coeff * y_i for coeff in lagrange_poly(x_i)] for x_i, y_i in points
+    ]
+    result = [
+        functools.reduce(operator.add, coeffs) for coeffs in zip(*partials)
+    ]
     return result
 
 
