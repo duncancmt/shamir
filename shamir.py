@@ -157,16 +157,14 @@ def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
 
 
 def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
-    def lagrange_denom(x_i: GFE) -> GFE:
-        result = x_i.coerce(1)
+    def lagrange_poly(x_i: GFE) -> list[GFE]:
+        old = x_i.coerce(1)
         for x_j, _ in points:
             if x_j == x_i:
                 continue
-            result *= x_i - x_j
-        return result
+            old *= x_i - x_j
+        old = [~old]
 
-    def lagrange_poly(x_i: GFE) -> list[GFE]:
-        old = [~lagrange_denom(x_i)]
         for x_j, _ in points:
             if x_j == x_i:
                 continue
