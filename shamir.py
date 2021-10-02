@@ -153,23 +153,6 @@ def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
     return result
 
 
-def _lagrange_interpolate(
-    points: Iterable[tuple[GFE, GFE]],
-    x: Union[GFE, gf.BinaryPolynomial, int, bytes],
-) -> GFE:
-    result: GFE
-    for i, (x_i, accum) in enumerate(points):
-        for j, (x_j, _) in enumerate(points):
-            if j == i:
-                continue
-            accum *= (x - x_j) / (x_i - x_j)
-        try:
-            result += accum
-        except NameError:
-            result = accum
-    return result
-
-
 def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
     def lagrange_denom(x_i: GFE) -> GFE:
         result = x_i.coerce(1)
