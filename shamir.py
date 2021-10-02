@@ -79,7 +79,7 @@ def split(
     k: int,
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
-) -> tuple[tuple[GFE, ...], tuple[GFE, ...], tuple[GFE, ...]]:
+) -> tuple[tuple[GFE, ...], tuple[GFE, ...], tuple[GFE, ...], tuple[int, ...]]:
     """Split a member of GF(2^n) into some points (field element pairs).
 
     These points can be used to reconstruct the original member through Lagrange
@@ -132,7 +132,7 @@ def split(
     # from high to low order
     c = tuple(b + r * a for a, b in zip(f_coeffs, g_coeffs))
 
-    return f_values, v, c
+    return f_values, v, c, (len(c)-1,) + ((0,) if len(secret) > 1 else ())
 
 
 def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
@@ -189,8 +189,8 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
 
 
 def recover(
-    shares: Iterable[GFE], v: Iterable[GFE], c: Collection[GFE]
-) -> tuple[GFE, GFE]:
+    shares: Iterable[GFE], v: Iterable[GFE], c: Collection[GFE], s: Iterable[int]
+) -> tuple[GFE, ...]:
     """Recover the constant term of the polynomial determined by the given shares.
 
     The degree of the polynomial is inferred from the length of `c`. Shares are
@@ -214,8 +214,8 @@ def recover(
             break
     if len(good_shares) < len(c):
         raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
-    coeffs = _recover_coeffs(list(good_shares))
-    return coeffs[-1], coeffs[0]
+    coeffs = _recover_coeffs(good_shares)
+    return tuple(coeffs[i] for i in s)
 
 
 __all__ = ["split", "verify", "recover"]
