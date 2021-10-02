@@ -8,7 +8,7 @@ security of the system to the security of the hash algorithm, SHAKE-256.
 
 import hashlib
 import itertools
-from collections.abc import Collection, Iterable
+from collections.abc import Collection, Iterable, Sequence
 from typing import TypeVar, Union
 
 import gf
@@ -55,7 +55,7 @@ def _hash_GFEs(x: Iterable[GFE]) -> GFE:
                 raise ValueError("Different fields")
         except NameError:
             modulus = i.modulus
-            h.update(b"\xff" + _modulus_bytes(modulus))
+            h.update(_modulus_bytes(modulus))
         h.update(bytes(i))
     byte_length = (modulus.bit_length() + 6) // 8
     return gf.ModularBinaryPolynomial(h.digest(byte_length), modulus)
@@ -75,7 +75,7 @@ def _evaluate(
 
 
 def split(
-    secret: GFE,
+    secret: Union[GFE, tuple[GFE, GFE]],
     k: int,
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
@@ -96,28 +96,31 @@ def split(
             f"Requested {n} shares which is fewer than {k} required to recover"
         )
 
+    if not isinstance(secret, tuple):
+        secret = (secret,)
+    coerce = secret[0].coerce
+    byte_length = len(secret[0])
+
     h = hashlib.shake_256()
     h.update(
-        b"\x00"
-        + _modulus_bytes(secret.modulus)
+        bytes(_hash_GFEs(secret))
+        + bytes(coerce(salt))
         + k.to_bytes(4, "big")
         + n.to_bytes(4, "big")
-        + bytes(secret)
-        + bytes(secret.coerce(salt))
     )
     random_elements = [
-        secret.coerce(bytes(x))
-        for x in grouper(h.digest(len(secret) * (k * 2 - 1)), len(secret))
+        coerce(bytes(x))
+        for x in grouper(h.digest(byte_length * (2 * k - len(secret))), byte_length)
     ]
 
     # from high to low order
-    f_coeffs = random_elements[: k - 1]
-    f_coeffs.append(secret)
-    g_coeffs = random_elements[k - 1 :]
+    f_coeffs = random_elements[: k - len(secret)]
+    g_coeffs = random_elements[len(f_coeffs) :]
+    f_coeffs = list(secret[1:]) + f_coeffs + list(secret[:1])
 
     # from low to high x
-    f_values = [_evaluate(f_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
-    g_values = [_evaluate(g_coeffs, secret.coerce(x)) for x in range(1, n + 1)]
+    f_values = [_evaluate(f_coeffs, coerce(x)) for x in range(1, n + 1)]
+    g_values = [_evaluate(g_coeffs, coerce(x)) for x in range(1, n + 1)]
 
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
@@ -167,9 +170,42 @@ def _lagrange_interpolate(
     return result
 
 
+def _recover_coeffs(points: Sequence[tuple[GFE, GFE]]) -> list[GFE]:
+    coerce = points[0][0].coerce
+
+    def lagrange_denom(i: int) -> GFE:
+        x_i, _ = points[i]
+        result = coerce(1)
+        for j, (x_j, _) in enumerate(points):
+            if j == i:
+                continue
+            result *= x_i - x_j
+        return result
+    
+    def lagrange_poly(i: int) -> list[GFE]:
+        old = [~lagrange_denom(i)]
+        for j in range(len(points)):
+            if j == i:
+                continue
+            x_j = points[j][0]
+            new = [coerce(0)] * (j + (2 if j < i else 1))
+            for k in range(0, len(new) - 1):
+                new[k + 1] += old[k]
+                new[k] -= x_j * old[k]
+            old = new
+        old.reverse()
+        return old
+
+    result = [coerce(0)] * len(points)
+    for i, (_, y_i) in enumerate(points):
+        for j, coeff in enumerate(lagrange_poly(i)):
+            result[j] += y_i * coeff
+    return result
+
+
 def recover(
     shares: Iterable[GFE], v: Iterable[GFE], c: Collection[GFE]
-) -> GFE:
+) -> tuple[GFE, GFE]:
     """Recover the constant term of the polynomial determined by the given shares.
 
     The degree of the polynomial is inferred from the length of `c`. Shares are
@@ -193,7 +229,8 @@ def recover(
             break
     if len(good_shares) < len(c):
         raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
-    return _lagrange_interpolate(good_shares, 0)
+    coeffs = _recover_coeffs(list(good_shares))
+    return coeffs[-1], coeffs[0]
 
 
 __all__ = ["split", "verify", "recover"]
