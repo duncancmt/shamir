@@ -194,15 +194,15 @@ def recover(
 ) -> tuple[GFE, ...]:
     """Recover the coefficients of the polynomial determined by the given shares.
 
-    The degree of the polynomial is inferred from the length of `c`. Shares are
-    points/field element pairs/GF(2^n)^2. The indices specified in `s` determine
-    which coefficients will be returned.
+    Shares are y coordinates of the polynomial. The x coordinate is inferred
+    using `v` and `c`. The degree of the polynomial is inferred from the length
+    of `c`. The indices specified in `s` determine which coefficients will be
+    returned.
 
     This function verifies each share against the public check data `v` and `c`.
     This function raises `ValueError` if too few shares pass validation against
     `v` and `c`. The `e.args[1]` is the list of invalid shares.
     """
-
     good_shares: set[tuple[GFE, GFE]] = set()
     bad_shares: list[GFE] = []
     for y in shares:
