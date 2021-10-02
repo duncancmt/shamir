@@ -135,7 +135,7 @@ def split(
     return f_values, v, c, (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
 
 
-def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
+def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> GFE:
     """Check whether a alleged secret share belongs to a group of shares.
 
     The group of shares is specified by the public `v` and `c` values returned
@@ -151,9 +151,9 @@ def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
         y_g = _evaluate(c, x) - z
         if v_i == _hash_GFEs((y_f, y_g)):
             if result != 0:
-                return 0
+                return y_f.coerce(0)
             result = x
-    return result
+    return y_f.coerce(result)
 
 
 def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
