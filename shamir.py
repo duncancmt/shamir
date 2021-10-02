@@ -140,11 +140,14 @@ def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
     z = _hash_GFEs(v) * y_f
+    result: int = 0
     for x, v_i in zip(itertools.count(1), v):
         y_g = _evaluate(c, x) - z
         if v_i == _hash_GFEs((y_f, y_g)):
-            return x
-    return 0
+            if result != 0:
+                return 0
+            result = x
+    return result
 
 
 def _lagrange_interpolate(
