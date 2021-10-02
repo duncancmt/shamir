@@ -77,7 +77,7 @@ def decode(words: str) -> bytes:
         raise ValueError(f"Invalid mnemonic length {len(raw)}")
     checksum_bits = len(raw) // 3
     entropy_bits = len(raw) * 11 - checksum_bits
-    raw = functools.reduce(
+    raw: int = functools.reduce(  # mypy is too stupid to infer this
         operator.or_,
         map(
             operator.lshift,

@@ -107,7 +107,7 @@ def split(
         + bytes(coerce(salt))
         + k.to_bytes(4, "big")
         + n.to_bytes(4, "big")
-        + (bytes(secret[1]) if len(secret) > 1 else b"")
+        + (bytes(secret[1]) if len(secret) > 1 else b"")  # type: ignore
     )
     random_elements = tuple(
         coerce(bytes(x))
@@ -132,7 +132,7 @@ def split(
     # from high to low order
     c = tuple(b + r * a for a, b in zip(f_coeffs, g_coeffs))
 
-    return f_values, v, c, (len(c)-1,) + ((0,) if len(secret) > 1 else ())
+    return f_values, v, c, (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
 
 
 def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> int:
@@ -187,7 +187,10 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
 
 
 def recover(
-    shares: Iterable[GFE], v: Iterable[GFE], c: Collection[GFE], s: Iterable[int]
+    shares: Iterable[GFE],
+    v: Iterable[GFE],
+    c: Collection[GFE],
+    s: Iterable[int],
 ) -> tuple[GFE, ...]:
     """Recover the constant term of the polynomial determined by the given shares.
 
