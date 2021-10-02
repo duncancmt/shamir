@@ -8,7 +8,7 @@ security of the system to the security of the hash algorithm, SHAKE-256.
 
 import hashlib
 import itertools
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Iterable
 from typing import TypeVar, Union
 
 import gf
@@ -75,7 +75,7 @@ def _evaluate(
 
 
 def split(
-    secret: Union[GFE, tuple[GFE, GFE]],
+    secret: Union[tuple[GFE], tuple[GFE, GFE]],
     k: int,
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
@@ -96,8 +96,6 @@ def split(
             f"Requested {n} shares which is fewer than {k} required to recover"
         )
 
-    if not isinstance(secret, tuple):
-        secret = (secret,)
     coerce = secret[0].coerce
     byte_length = len(secret[0])
 
@@ -170,34 +168,35 @@ def _lagrange_interpolate(
     return result
 
 
-def _recover_coeffs(points: Sequence[tuple[GFE, GFE]]) -> list[GFE]:
-    coerce = points[0][0].coerce
-
-    def lagrange_denom(i: int) -> GFE:
-        x_i, _ = points[i]
-        result = coerce(1)
-        for j, (x_j, _) in enumerate(points):
-            if j == i:
+def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
+    def lagrange_denom(x_i: GFE) -> GFE:
+        result = x_i.coerce(1)
+        for x_j, _ in points:
+            if x_j == x_i:
                 continue
             result *= x_i - x_j
         return result
     
-    def lagrange_poly(i: int) -> list[GFE]:
-        old = [~lagrange_denom(i)]
-        for j, (x_j, _) in enumerate(points):
-            if j == i:
+    def lagrange_poly(x_i: GFE) -> list[GFE]:
+        old = [~lagrange_denom(x_i)]
+        for x_j, _ in points:
+            if x_j == x_i:
                 continue
-            new = [coerce(0)] * (len(old) + 1)
+            new = [x_j.coerce(0)] * (len(old) + 1)
             for k, coeff in enumerate(old):
                 new[k + 1] -= x_j * coeff
                 new[k] += coeff
             old = new
         return old
 
-    result = [coerce(0)] * len(points)
-    for i, (_, y_i) in enumerate(points):
-        for j, coeff in enumerate(lagrange_poly(i)):
-            result[j] += y_i * coeff
+    result:list[GFE] = []
+    for x_i, y_i in points:
+        for j, coeff in enumerate(lagrange_poly(x_i)):
+            term = y_i * coeff
+            try:
+                result[j] += term
+            except IndexError:
+                result.append(term)
     return result
 
 
