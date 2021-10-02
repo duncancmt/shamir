@@ -108,7 +108,9 @@ def split(
     )
     random_elements = [
         coerce(bytes(x))
-        for x in grouper(h.digest(byte_length * (2 * k - len(secret))), byte_length)
+        for x in grouper(
+            h.digest(byte_length * (2 * k - len(secret))), byte_length
+        )
     ]
 
     # from high to low order
