@@ -176,20 +176,20 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
                 continue
             result *= x_i - x_j
         return result
-    
+
     def lagrange_poly(x_i: GFE) -> list[GFE]:
         old = [~lagrange_denom(x_i)]
         for x_j, _ in points:
             if x_j == x_i:
                 continue
-            new = [x_j.coerce(0)] * (len(old) + 1)
-            for k, coeff in enumerate(old):
-                new[k + 1] -= x_j * coeff
-                new[k] += coeff
+            new = [x_j.coerce(0)]
+            for coeff in old:
+                new[-1] += coeff
+                new.append(-x_j * coeff)
             old = new
         return old
 
-    result:list[GFE] = []
+    result: list[GFE] = []
     for x_i, y_i in points:
         for j, coeff in enumerate(lagrange_poly(x_i)):
             term = y_i * coeff
