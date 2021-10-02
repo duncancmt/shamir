@@ -80,14 +80,14 @@ def split(
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
 ) -> tuple[tuple[GFE, ...], tuple[GFE, ...], tuple[GFE, ...], tuple[int, ...]]:
-    """Split a member of GF(2^n) into some points (field element pairs).
+    """Split up to 2 members of GF(2^n) into some points (field element pairs).
 
-    These points can be used to reconstruct the original member through Lagrange
-    interpolation.
+    These points can be used to reconstruct the polynomial and extract the
+    original member(s) as its coefficients.
 
-    Returns the y-values corresponding to the x-values 1..n, and 2 lists of
-    auxilliary, public values required to verify the validity of each individual
-    share.
+    Returns the y-values corresponding to the x-values 1..n, 2 lists of
+    auxilliary/public values required to verify the validity of each individual
+    share, and the indices of the coefficients where the secrets were stored.
     """
     if k < 1:
         raise ValueError(f"Can't split into {k} shares")
@@ -192,11 +192,11 @@ def recover(
     c: Collection[GFE],
     s: Iterable[int],
 ) -> tuple[GFE, ...]:
-    """Recover the constant term of the polynomial determined by the given shares.
+    """Recover the coefficients of the polynomial determined by the given shares.
 
     The degree of the polynomial is inferred from the length of `c`. Shares are
-    points/field element pairs/GF(2^n)^2. Fundamentally, this is Lagrange
-    interpolation.
+    points/field element pairs/GF(2^n)^2. The indices specified in `s` determine
+    which coefficients will be returned.
 
     This function verifies each share against the public check data `v` and `c`.
     This function raises `ValueError` if too few shares pass validation against
