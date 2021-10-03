@@ -45,12 +45,12 @@ class TestShamir(unittest.TestCase):
                             random.getrandbits(self.modulus.bit_length() - 1),
                             self.modulus,
                         )
-                        shares, v, c = shamir.split(secret, k, n, salt)
+                        shares, v, c, s = shamir.split((secret,), k, n, salt)
                         for i in range(10):
                             with self.subTest(i=i):
                                 subset = random.sample(shares, k)
                                 self.assertEqual(
-                                    int(shamir.recover(subset, v, c)),
+                                    int(shamir.recover(subset, v, c, s)[0]),
                                     int(secret),
                                 )
 
