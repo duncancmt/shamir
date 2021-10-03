@@ -298,6 +298,9 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
         """Multiplication is the same as BinaryPolynomial, but with a modular reduction."""
+        # This could be made more efficient by performing modular reductions
+        # incrementally during multiplication. However, this would complicate
+        # the implementation.
         other = self.coerce(other)
         return type(self)(self._value * other._value, self._modulus)
 

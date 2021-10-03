@@ -171,20 +171,23 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
     order (from high order to low order). Points with duplicate x coordinates
     are silently ignored.
     """
-    def basis_poly(x_i: GFE) -> list[GFE]:
-        """Get the Lagrange basis polynomial for `x_i`.
+    def basis_poly(point: tuple[GFE, GFE]) -> list[GFE]:
+        """Get the Lagrange basis polynomial for `point` := (`x_i`, `y_i`).
 
-        The basis polynomial for `x_i` is zero for all `x_j != x_i` and is one
-        at `x_i`.
+        The polynomial for `x_i` is zero for all `x_j != x_i` and is `y_i` at
+        `x_i`. Strictly speaking, this isn't the *basis* polynomial because it's
+        `y_i` at `x_i` instead of 1, but this difference avoids a multiplication
+        by `y_i` later.
         """
-        # Inversion is very expensive, so we compute the denominator of the
+        # Division is very expensive, so we compute the denominator of the
         # basis polynomial here and invert once.
+        x_i, y_i = point
         old = x_i.coerce(1)
         for x_j, _ in points:
             if x_j == x_i:
                 continue
             old *= x_i - x_j
-        old = [~old]
+        old = [y_i / old]
 
         for x_j, _ in points:
             if x_j == x_i:
@@ -199,13 +202,12 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
     # By summing the coefficients of each basis polynomial, we recover the
     # coefficients of the original polynomial.
     result: list[GFE] = []
-    for x_i, y_i in points:
-        for j, coeff in enumerate(basis_poly(x_i)):
-            term = y_i * coeff
+    for point in points:
+        for j, coeff in enumerate(basis_poly(point)):
             try:
-                result[j] += term
+                result[j] += coeff
             except IndexError:
-                result.append(term)
+                result.append(coeff)
     return result
 
 
