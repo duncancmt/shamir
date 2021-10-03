@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from collections.abc import Iterable
 from typing import Any
 
 import bip39
@@ -29,7 +30,7 @@ def split(args: Any) -> None:
     n: int = args.shares
     salt: int = args.salt
     try:
-        shares, v, c = shamir.split(secret, k, n, salt)
+        shares, v, c, s = shamir.split((secret,), k, n, salt)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         sys.exit(1)
@@ -39,10 +40,10 @@ def split(args: Any) -> None:
             file=sys.stdout,
             flush=True,
         )
-    save_metadata(args, v, c)
+    save_metadata(args, v, c, s)
 
 
-def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
+def get_metadata(args: Any) -> tuple[list[GFE], list[GFE], list[int]]:
     metadata = json.load(args.file)
     modulus = gf.get_modulus(len(metadata["v"][0]) * 8)
     v = [
@@ -53,14 +54,18 @@ def get_metadata(args: Any) -> tuple[list[GFE], list[GFE]]:
         gf.ModularBinaryPolynomial(bytes(c_i), modulus)
         for c_i in metadata["c"]
     ]
-    return v, c
+    s = list(metadata["s"])
+    return v, c, s
 
 
-def save_metadata(args: Any, v: list[GFE], c: list[GFE]) -> None:
+def save_metadata(
+    args: Any, v: Iterable[GFE], c: Iterable[GFE], s: Iterable[int]
+) -> None:
     json.dump(
         {
             "v": [list(bytes(v_i)) for v_i in v],
             "c": [list(bytes(c_i)) for c_i in c],
+            "s": list(s),
         },
         args.file,
     )
@@ -77,15 +82,15 @@ def add_metadata_args(parser: argparse.ArgumentParser) -> None:
 
 def verify(args: Any) -> None:
     share: GFE = args.share
-    v, c = get_metadata(args)
+    v, c, _ = get_metadata(args)
     sys.exit(not shamir.verify(share, v, c))
 
 
 def recover(args: Any) -> None:
     shares: list[GFE] = args.shares
-    v, c = get_metadata(args)
+    v, c, s = get_metadata(args)
     try:
-        secret = shamir.recover(shares, v, c)
+        secret = shamir.recover(shares, v, c, s)[0]
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         for share in e.args[1]:
