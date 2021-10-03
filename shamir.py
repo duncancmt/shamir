@@ -89,8 +89,8 @@ def split(
     auxilliary/public values required to verify the validity of each individual
     share, and the indices of the coefficients where the secrets were stored.
     """
-    if k < 1:
-        raise ValueError(f"Can't split into {k} shares")
+    if k < len(secret):
+        raise ValueError(f"Can't split {len(secret)} secrets into {k} shares")
     if n < k:
         raise ValueError(
             f"Requested {n} shares which is fewer than {k} required to recover"
