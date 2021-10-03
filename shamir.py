@@ -216,8 +216,7 @@ def split(
         )
     )
 
-    # from high to low order
-    # the optional second secret is the highest coeff
+    # from high to low order, the optional second secret is the highest coeff
     f = FiniteFieldPolynomial(
         secret[1:] + random_elements[: k - len(secret)] + secret[:1]
     )
