@@ -3,8 +3,8 @@
 import argparse
 import json
 import sys
-from collections.abc import Iterable
-from typing import Any, Union
+from collections.abc import Iterable, Sequence
+from typing import Any, Optional, Type, Union
 
 import bip39
 import gf
@@ -38,7 +38,7 @@ def save_metadata(
 
 
 def split(args: Any) -> None:
-    secret: Union[tuple[GFE], tuple[GFE, GFE]] = tuple(args.secret)
+    secret: Union[tuple[GFE], tuple[GFE, GFE]] = tuple(args.secret)  # type: ignore
     k: int = args.needed
     n: int = args.shares
     salt: int = args.salt
@@ -101,11 +101,21 @@ def recover(args: Any) -> None:
         )
 
 
-def required_length(nmin, nmax):
+def required_length(nmin: int, nmax: int) -> Type[argparse.Action]:
     class RequiredLength(argparse.Action):
-        def __call__(self, parser, args, values, option_string=None):
+        def __call__(
+            self,
+            parser: argparse.ArgumentParser,
+            args: argparse.Namespace,
+            values: Union[str, Sequence[Any], None],
+            option_string: Optional[str] = None,
+        ) -> None:
+            if values is None:
+                parser.error(f'argument "{self.dest}" is required')
+            if isinstance(values, str):
+                values = [values]
             if not nmin <= len(values) <= nmax:
-                return parser.error(
+                parser.error(
                     f'argument "{self.dest}" requires between {nmin} and {nmax} arguments'
                 )
             setattr(args, self.dest, values)
