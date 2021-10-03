@@ -10,12 +10,107 @@ import functools
 import hashlib
 import itertools
 import operator
-from collections.abc import Collection, Iterable
-from typing import TypeVar, Union
+from collections.abc import Iterable, Sequence
+from typing import Type, TypeVar, Union, overload
 
 import gf
 
 T = TypeVar("T")
+
+# Galois Field Element
+GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
+
+
+class FiniteFieldPolynomial(Sequence[GFE]):
+
+    __slots__ = ("_coeffs",)
+    _coeffs: tuple[GFE, ...]
+
+    SelfType = TypeVar("SelfType", bound="FiniteFieldPolynomial")
+
+    def __init__(self, coeffs: Iterable[GFE]) -> None:
+        self._coeffs = tuple(coeffs)
+
+    def __add__(self: SelfType, other: SelfType) -> SelfType:
+        a, b = self._coeffs, other._coeffs
+        if len(b) > len(a):
+            a, b = b, a
+        return type(self)(
+            itertools.chain(a[: -len(b)], map(operator.add, a[-len(b) :], b))
+        )
+
+    def __mul__(
+        self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
+    ) -> SelfType:
+        return type(self)((other * coeff) for coeff in self)
+
+    def __rmul__(
+        self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
+    ) -> SelfType:
+        return self * other
+
+    def __call__(self, x: Union[GFE, gf.BinaryPolynomial, int, bytes]) -> GFE:
+        return functools.reduce(lambda accum, coeff: accum * x + coeff, self)
+
+    @overload
+    def __getitem__(self, i: int) -> GFE:
+        ...
+
+    @overload
+    def __getitem__(self, i: slice) -> Sequence[GFE]:
+        ...
+
+    def __getitem__(self, i: Union[int, slice]) -> Union[GFE, Sequence[GFE]]:
+        return self._coeffs[i]
+
+    def __len__(self) -> int:
+        return len(self._coeffs)
+
+    @classmethod
+    def from_points(
+        cls: Type[SelfType], points: Iterable[tuple[GFE, GFE]]
+    ) -> SelfType:
+        """Return the minimal-order polynomial that intercepts each point.
+
+        This is Lagrange interpolation. The coefficients are returned in reverse
+        order (from high order to low order). Points with duplicate x coordinates
+        are silently ignored.
+        """
+
+        def basis_poly(point: tuple[GFE, GFE]) -> list[GFE]:
+            """Get the Lagrange basis polynomial for `point` := (`x_i`, `y_i`).
+
+            The polynomial for `x_i` is zero for all `x_j != x_i` and is `y_i` at
+            `x_i`. Strictly speaking, this isn't the *basis* polynomial because it's
+            `y_i` at `x_i` instead of 1, but this difference avoids a multiplication
+            by `y_i` later.
+            """
+            # Division is very expensive, so we compute the denominator of the
+            # basis polynomial here and invert once.
+            x_i, y_i = point
+            old = x_i.coerce(1)
+            for x_j, _ in points:
+                if x_j == x_i:
+                    continue
+                old *= x_i - x_j
+            old = [y_i / old]
+
+            for x_j, _ in points:
+                if x_j == x_i:
+                    continue
+                new = [x_j.coerce(0)]
+                for coeff in old:
+                    new[-1] += coeff
+                    new.append(-x_j * coeff)
+                old = new
+            return old
+
+        # By summing the coefficients of each basis polynomial, we recover the
+        # coefficients of the original polynomial.
+        return cls(
+            functools.reduce(operator.add, coeffs)
+            for coeffs in zip(*map(basis_poly, points))
+        )
 
 
 def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
@@ -44,10 +139,6 @@ def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
     )
 
 
-# Galois Field Element
-GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
-
-
 def _hash_pair(
     a: GFE, b: Union[GFE, gf.BinaryPolynomial, int, bytes]
 ) -> bytes:
@@ -65,19 +156,13 @@ def _hash_list(x: Iterable[bytes], length: int) -> bytes:
     return h.digest(length)
 
 
-def _evaluate(
-    poly: Iterable[GFE], x: Union[GFE, gf.BinaryPolynomial, int, bytes]
-) -> GFE:
-    return functools.reduce(lambda accum, coeff: accum * x + coeff, poly)
-
-
 def split(
     secret: Union[tuple[GFE], tuple[GFE, GFE]],
     k: int,
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
 ) -> tuple[
-    tuple[GFE, ...], tuple[bytes, ...], tuple[GFE, ...], tuple[int, ...]
+    tuple[GFE, ...], tuple[bytes, ...], FiniteFieldPolynomial, tuple[int, ...]
 ]:
     """Perform Shamir Secret Sharing to split up to 2 members of GF(2^n).
 
@@ -117,21 +202,21 @@ def split(
     )
 
     # from high to low order
-    f_coeffs = random_elements[: k - len(secret)]
-    g_coeffs = random_elements[len(f_coeffs) :]
     # the optional second secret is the highest coeff
-    f_coeffs = secret[1:] + f_coeffs + secret[:1]
+    f = FiniteFieldPolynomial(
+        secret[1:] + random_elements[: k - len(secret)] + secret[:1]
+    )
+    g = FiniteFieldPolynomial(random_elements[k - len(secret) :])
 
     # from low to high x
-    f_values = tuple(_evaluate(f_coeffs, coerce(x)) for x in range(1, n + 1))
-    g_values = tuple(_evaluate(g_coeffs, coerce(x)) for x in range(1, n + 1))
+    f_values = tuple(map(f, range(1, n + 1)))
+    g_values = tuple(map(g, range(1, n + 1)))
 
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
     v = tuple(map(_hash_pair, f_values, g_values))
     r = _hash_list(v, byte_length)
-    # from high to low order
-    c = tuple(b + r * a for a, b in zip(f_coeffs, g_coeffs))
+    c = r * f + g
 
     # Coefficients are ordered from high to low order, so we supply indices from
     # high to low to get the constant coefficient first.
@@ -139,7 +224,7 @@ def split(
     return f_values, v, c, s
 
 
-def verify(y_f: GFE, v: Iterable[bytes], c: Iterable[GFE]) -> GFE:
+def verify(y_f: GFE, v: Iterable[bytes], c: FiniteFieldPolynomial) -> GFE:
     """Check whether a alleged secret share belongs to a group of shares.
 
     The group of shares is specified by the public `v` and `c` values returned
@@ -152,7 +237,7 @@ def verify(y_f: GFE, v: Iterable[bytes], c: Iterable[GFE]) -> GFE:
     z = _hash_list(v, len(y_f)) * y_f
     result: int = 0
     for x, v_i in zip(itertools.count(1), v):
-        y_g = _evaluate(c, x) - z
+        y_g = c(x) - z
         if v_i == _hash_pair(y_f, y_g):
             if result != 0:
                 return y_f.coerce(0)
@@ -160,53 +245,10 @@ def verify(y_f: GFE, v: Iterable[bytes], c: Iterable[GFE]) -> GFE:
     return y_f.coerce(result)
 
 
-def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
-    """Return the minimal-order polynomial that intercepts each point.
-
-    This is Lagrange interpolation. The coefficients are returned in reverse
-    order (from high order to low order). Points with duplicate x coordinates
-    are silently ignored.
-    """
-    def basis_poly(point: tuple[GFE, GFE]) -> list[GFE]:
-        """Get the Lagrange basis polynomial for `point` := (`x_i`, `y_i`).
-
-        The polynomial for `x_i` is zero for all `x_j != x_i` and is `y_i` at
-        `x_i`. Strictly speaking, this isn't the *basis* polynomial because it's
-        `y_i` at `x_i` instead of 1, but this difference avoids a multiplication
-        by `y_i` later.
-        """
-        # Division is very expensive, so we compute the denominator of the
-        # basis polynomial here and invert once.
-        x_i, y_i = point
-        old = x_i.coerce(1)
-        for x_j, _ in points:
-            if x_j == x_i:
-                continue
-            old *= x_i - x_j
-        old = [y_i / old]
-
-        for x_j, _ in points:
-            if x_j == x_i:
-                continue
-            new = [x_j.coerce(0)]
-            for coeff in old:
-                new[-1] += coeff
-                new.append(-x_j * coeff)
-            old = new
-        return old
-
-    # By summing the coefficients of each basis polynomial, we recover the
-    # coefficients of the original polynomial.
-    return [
-        functools.reduce(operator.add, coeffs)
-        for coeffs in zip(*map(basis_poly, points))
-    ]
-
-
 def recover(
     shares: Iterable[GFE],
     v: Iterable[bytes],
-    c: Collection[GFE],
+    c: FiniteFieldPolynomial,
     s: Iterable[int],
 ) -> tuple[GFE, ...]:
     """Recover the coefficients of the polynomial determined by the given shares.
@@ -227,13 +269,13 @@ def recover(
         if x == 0:
             bad_shares.append(y)
         else:
-            good_shares.add((y.coerce(x), y))
+            good_shares.add((x, y))
         if len(good_shares) == len(c):
             break
     if len(good_shares) < len(c):
         raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
-    coeffs = _recover_coeffs(good_shares)
-    return tuple(coeffs[i] for i in s)
+    poly = FiniteFieldPolynomial.from_points(good_shares)
+    return tuple(poly[i] for i in s)
 
 
 __all__ = ["split", "verify", "recover"]
