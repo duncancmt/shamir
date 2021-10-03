@@ -29,7 +29,7 @@ class TestShamir(unittest.TestCase):
                             random.getrandbits(self.modulus.bit_length() - 1),
                             self.modulus,
                         )
-                        shares, v, c = shamir.split(secret, k, n, salt)
+                        shares, v, c, _ = shamir.split((secret,), k, n, salt)
                         for i, share in enumerate(shares):
                             with self.subTest(i=i):
                                 self.assertEqual(
