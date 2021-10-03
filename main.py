@@ -90,17 +90,18 @@ def recover(args: Any) -> None:
     shares: list[GFE] = args.shares
     v, c, s = get_metadata(args)
     try:
-        secret = shamir.recover(shares, v, c, s)[0]
+        secret = shamir.recover(shares, v, c, s)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         for share in e.args[1]:
             print("\t" + to_mnemonic(share), file=sys.stderr, flush=True)
         sys.exit(1)
-    print(
-        to_mnemonic(secret),
-        file=sys.stdout,
-        flush=True,
-    )
+    for i in secret:
+        print(
+            to_mnemonic(i),
+            file=sys.stdout,
+            flush=True,
+        )
 
 
 def required_length(nmin, nmax):
