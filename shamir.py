@@ -79,14 +79,15 @@ def split(
 ) -> tuple[
     tuple[GFE, ...], tuple[bytes, ...], tuple[GFE, ...], tuple[int, ...]
 ]:
-    """Split up to 2 members of GF(2^n) into some points (field element pairs).
+    """Perform Shamir Secret Sharing to split up to 2 members of GF(2^n).
 
-    These points can be used to reconstruct the polynomial and extract the
-    original member(s) as its coefficients.
+    Returns the y coordinates corresponding to the x coordinates `[1..n]`, 2
+    lists of auxilliary/public values required to verify the validity of each
+    individual share, and the indices where the secrets were stored.
 
-    Returns the y-values corresponding to the x-values 1..n, 2 lists of
-    auxilliary/public values required to verify the validity of each individual
-    share, and the indices of the coefficients where the secrets were stored.
+    The points (first return value and associated x coordinates) can be used to
+    reconstruct a polynomial of degree `k - 1`. This polynomial has coefficients
+    corresponding to the original secret(s).
     """
     if k < len(secret):
         raise ValueError(f"Can't split {len(secret)} secrets into {k} shares")
