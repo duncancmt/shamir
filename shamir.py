@@ -25,10 +25,6 @@ def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     return zip(*([iter(iterable)] * n))
 
 
-# Galois Field Element
-GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
-
-
 def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
     modulus = int(modulus)
     modulus &= ~((1 << (modulus.bit_length() - 1)) | 1)
@@ -44,6 +40,10 @@ def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
         + bits[1].to_bytes(1, "big")
         + bits[2].to_bytes(1, "big")
     )
+
+
+# Galois Field Element
+GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 def _hash_pair(
