@@ -54,7 +54,7 @@ class TestShamir(unittest.TestCase):
                                     int(secret),
                                 )
 
-    def test_lagrange_interpolate(self) -> None:
+    def test_lagrange(self) -> None:
         for salt in range(3):
             for k in range(2, 9):
                 for n in range(k, 2 * k):
@@ -63,25 +63,24 @@ class TestShamir(unittest.TestCase):
                             random.getrandbits(self.modulus.bit_length() - 1),
                             self.modulus,
                         )
-                        shares, v, c = shamir.split(secret, k, n, salt)
+                        shares, v, c, _ = shamir.split((secret,), k, n, salt)
                         points = list(
                             zip(map(secret.coerce, itertools.count(1)), shares)
                         )
                         for i in range(10):
                             with self.subTest(i=i):
                                 subset = random.sample(points, k)
+                                poly = (
+                                    shamir.FiniteFieldPolynomial.from_points(
+                                        subset
+                                    )
+                                )
                                 self.assertEqual(
-                                    int(
-                                        shamir._lagrange_interpolate(subset, 0)
-                                    ),
+                                    int(poly(0)),
                                     int(secret),
                                 )
                                 for x in range(1, n + 1):
                                     self.assertEqual(
-                                        int(
-                                            shamir._lagrange_interpolate(
-                                                subset, x
-                                            )
-                                        ),
+                                        int(poly(x)),
                                         int(shares[x - 1]),
                                     )
