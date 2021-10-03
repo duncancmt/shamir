@@ -107,7 +107,7 @@ def required_length(nmin, nmax):
     class RequiredLength(argparse.Action):
         def __call__(self, parser, args, values, option_string=None):
             if not nmin <= len(values) <= nmax:
-                raise argparse.ArgumentTypeError(
+                return parser.error(
                     f'argument "{self.dest}" requires between {nmin} and {nmax} arguments'
                 )
             setattr(args, self.dest, values)
