@@ -123,6 +123,7 @@ def split(
     # from high to low order
     f_coeffs = random_elements[: k - len(secret)]
     g_coeffs = random_elements[len(f_coeffs) :]
+    # the optional second secret is the highest coeff
     f_coeffs = secret[1:] + f_coeffs + secret[:1]
 
     # from low to high x
@@ -136,7 +137,10 @@ def split(
     # from high to low order
     c = tuple(b + r * a for a, b in zip(f_coeffs, g_coeffs))
 
-    return f_values, v, c, (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
+    # Coefficients are ordered from high to low order, so we supply indices from
+    # high to low to get the constant coefficient first.
+    s = (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
+    return f_values, v, c, s
 
 
 def verify(y_f: GFE, v: Iterable[bytes], c: Iterable[GFE]) -> GFE:
@@ -161,7 +165,20 @@ def verify(y_f: GFE, v: Iterable[bytes], c: Iterable[GFE]) -> GFE:
 
 
 def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
-    def lagrange_poly(x_i: GFE) -> list[GFE]:
+    """Return the minimal-order polynomial that intercepts each point.
+
+    This is Lagrange interpolation. The coefficients are returned in reverse
+    order (from high order to low order). Points with duplicate x coordinates
+    are silently ignored.
+    """
+    def basis_poly(x_i: GFE) -> list[GFE]:
+        """Get the Lagrange basis polynomial for `x_i`.
+
+        The basis polynomial for `x_i` is zero for all `x_j != x_i` and is one
+        at `x_i`.
+        """
+        # Inversion is very expensive, so we compute the denominator of the
+        # basis polynomial here and invert once.
         old = x_i.coerce(1)
         for x_j, _ in points:
             if x_j == x_i:
@@ -179,9 +196,11 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
             old = new
         return old
 
+    # By summing the coefficients of each basis polynomial, we recover the
+    # coefficients of the original polynomial.
     result: list[GFE] = []
     for x_i, y_i in points:
-        for j, coeff in enumerate(lagrange_poly(x_i)):
+        for j, coeff in enumerate(basis_poly(x_i)):
             term = y_i * coeff
             try:
                 result[j] += term
