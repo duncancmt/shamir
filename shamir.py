@@ -22,6 +22,15 @@ GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 class FiniteFieldPolynomial(Sequence[GFE]):
+    """Extremely limited polynomial class.
+
+    Implements only addition of polynomials and multiplication of polynomials by
+    constants. Factory function `from_points` performs Lagrange interpolation.
+
+    NOTE: Stores coefficients in *reverse* order (from high order to low
+    order). Iteration and subscripting returns the coefficients in this reversed
+    order.
+    """
 
     __slots__ = ("_coeffs",)
     _coeffs: tuple[GFE, ...]
@@ -29,9 +38,11 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     SelfType = TypeVar("SelfType", bound="FiniteFieldPolynomial")
 
     def __init__(self, coeffs: Iterable[GFE]) -> None:
+        """Store the coefficients."""
         self._coeffs = tuple(coeffs)
 
     def __add__(self: SelfType, other: SelfType) -> SelfType:
+        """Coefficient-wise addition of polynomials."""
         a, b = self._coeffs, other._coeffs
         if len(b) > len(a):
             a, b = b, a
@@ -42,14 +53,17 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     def __mul__(
         self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
     ) -> SelfType:
+        """Multiplication of a polynomial by a constant."""
         return type(self)((other * coeff) for coeff in self)
 
     def __rmul__(
         self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
     ) -> SelfType:
+        """Multiplication of a polynomial by a constant."""
         return self * other
 
     def __call__(self, x: Union[GFE, gf.BinaryPolynomial, int, bytes]) -> GFE:
+        """Evaluation of the polynomial."""
         return functools.reduce(lambda accum, coeff: accum * x + coeff, self)
 
     @overload
@@ -61,9 +75,11 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         ...
 
     def __getitem__(self, i: Union[int, slice]) -> Union[GFE, Sequence[GFE]]:
+        """Get a coefficient or range of coefficients."""
         return self._coeffs[i]
 
     def __len__(self) -> int:
+        """Get the degree (plus one) of the polynomial."""
         return len(self._coeffs)
 
     @classmethod
@@ -105,9 +121,7 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     ) -> SelfType:
         """Return the minimal-order polynomial that intercepts each point.
 
-        This is Lagrange interpolation. The coefficients are returned in reverse
-        order (from high order to low order). Points with duplicate x
-        coordinates are silently ignored.
+        Points with duplicate x coordinates are silently ignored.
         """
         return functools.reduce(
             operator.add, (cls._basis_poly(point, points) for point in points)
