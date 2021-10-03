@@ -6,8 +6,10 @@ derive the coefficients of the polynomial. Each of these changes reduces the
 security of the system to the security of the hash algorithm, SHAKE-256.
 """
 
+import functools
 import hashlib
 import itertools
+import operator
 from collections.abc import Collection, Iterable
 from typing import TypeVar, Union
 
@@ -66,14 +68,7 @@ def _hash_list(x: Iterable[bytes], length: int) -> bytes:
 def _evaluate(
     poly: Iterable[GFE], x: Union[GFE, gf.BinaryPolynomial, int, bytes]
 ) -> GFE:
-    accum: GFE
-    for coeff in poly:
-        try:
-            accum *= x
-            accum += coeff
-        except NameError:
-            accum = coeff
-    return accum
+    return functools.reduce(lambda accum, coeff: accum * x + coeff, poly)
 
 
 def split(
@@ -201,14 +196,10 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
 
     # By summing the coefficients of each basis polynomial, we recover the
     # coefficients of the original polynomial.
-    result: list[GFE] = []
-    for point in points:
-        for j, coeff in enumerate(basis_poly(point)):
-            try:
-                result[j] += coeff
-            except IndexError:
-                result.append(coeff)
-    return result
+    return [
+        functools.reduce(operator.add, coeffs)
+        for coeffs in zip(*map(basis_poly, points))
+    ]
 
 
 def recover(
