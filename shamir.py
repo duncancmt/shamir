@@ -67,49 +67,50 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         return len(self._coeffs)
 
     @classmethod
+    def _basis_poly(
+        cls: Type[SelfType],
+        point: tuple[GFE, GFE],
+        points: Iterable[tuple[GFE, GFE]],
+    ) -> SelfType:
+        """Get the Lagrange basis polynomial for `point` := (`x_i`, `y_i`).
+
+        The polynomial for `x_i` is zero for all `x_j != x_i` and is `y_i` at
+        `x_i`. Strictly speaking, this isn't the *basis* polynomial because it's
+        `y_i` at `x_i` instead of 1, but this difference avoids a multiplication
+        by `y_i` later.
+        """
+        # Division is very expensive, so we compute the denominator of the basis
+        # polynomial here and invert once.
+        x_i, y_i = point
+        old = x_i.coerce(1)
+        for x_j, _ in points:
+            if x_j == x_i:
+                continue
+            old *= x_i - x_j
+        old = [y_i / old]
+
+        for x_j, _ in points:
+            if x_j == x_i:
+                continue
+            new = [x_j.coerce(0)]
+            for coeff in old:
+                new[-1] += coeff
+                new.append(-x_j * coeff)
+            old = new
+        return cls(old)
+
+    @classmethod
     def from_points(
         cls: Type[SelfType], points: Iterable[tuple[GFE, GFE]]
     ) -> SelfType:
         """Return the minimal-order polynomial that intercepts each point.
 
         This is Lagrange interpolation. The coefficients are returned in reverse
-        order (from high order to low order). Points with duplicate x coordinates
-        are silently ignored.
+        order (from high order to low order). Points with duplicate x
+        coordinates are silently ignored.
         """
-
-        def basis_poly(point: tuple[GFE, GFE]) -> list[GFE]:
-            """Get the Lagrange basis polynomial for `point` := (`x_i`, `y_i`).
-
-            The polynomial for `x_i` is zero for all `x_j != x_i` and is `y_i` at
-            `x_i`. Strictly speaking, this isn't the *basis* polynomial because it's
-            `y_i` at `x_i` instead of 1, but this difference avoids a multiplication
-            by `y_i` later.
-            """
-            # Division is very expensive, so we compute the denominator of the
-            # basis polynomial here and invert once.
-            x_i, y_i = point
-            old = x_i.coerce(1)
-            for x_j, _ in points:
-                if x_j == x_i:
-                    continue
-                old *= x_i - x_j
-            old = [y_i / old]
-
-            for x_j, _ in points:
-                if x_j == x_i:
-                    continue
-                new = [x_j.coerce(0)]
-                for coeff in old:
-                    new[-1] += coeff
-                    new.append(-x_j * coeff)
-                old = new
-            return old
-
-        # By summing the coefficients of each basis polynomial, we recover the
-        # coefficients of the original polynomial.
-        return cls(
-            functools.reduce(operator.add, coeffs)
-            for coeffs in zip(*map(basis_poly, points))
+        return functools.reduce(
+            operator.add, (cls._basis_poly(point, points) for point in points)
         )
 
 
