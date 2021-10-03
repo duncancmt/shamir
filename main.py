@@ -25,7 +25,10 @@ def to_mnemonic(x: GFE) -> str:
 
 
 def save_metadata(
-    args: Any, v: Iterable[bytes], c: Iterable[GFE], s: Iterable[int]
+    args: Any,
+    v: Iterable[bytes],
+    c: shamir.FiniteFieldPolynomial,
+    s: Iterable[int],
 ) -> None:
     json.dump(
         {
@@ -56,14 +59,16 @@ def split(args: Any) -> None:
     save_metadata(args, v, c, s)
 
 
-def get_metadata(args: Any) -> tuple[list[bytes], list[GFE], list[int]]:
+def get_metadata(
+    args: Any,
+) -> tuple[list[bytes], shamir.FiniteFieldPolynomial, list[int]]:
     metadata = json.load(args.file)
     modulus = gf.get_modulus(len(metadata["v"][0]) * 8)
     v = [bytes(v_i) for v_i in metadata["v"]]
-    c = [
+    c = shamir.FiniteFieldPolynomial(
         gf.ModularBinaryPolynomial(bytes(c_i), modulus)
         for c_i in metadata["c"]
-    ]
+    )
     s = list(metadata["s"])
     return v, c, s
 
