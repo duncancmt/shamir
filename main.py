@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Union
 
 import bip39
 import gf
@@ -24,13 +24,26 @@ def to_mnemonic(x: GFE) -> str:
     return bip39.encode(bytes(x))
 
 
+def save_metadata(
+    args: Any, v: Iterable[GFE], c: Iterable[GFE], s: Iterable[int]
+) -> None:
+    json.dump(
+        {
+            "v": [list(bytes(v_i)) for v_i in v],
+            "c": [list(bytes(c_i)) for c_i in c],
+            "s": list(s),
+        },
+        args.file,
+    )
+
+
 def split(args: Any) -> None:
-    secret: GFE = args.secret
+    secret: Union[tuple[GFE], tuple[GFE, GFE]] = tuple(args.secret)
     k: int = args.needed
     n: int = args.shares
     salt: int = args.salt
     try:
-        shares, v, c, s = shamir.split((secret,), k, n, salt)
+        shares, v, c, s = shamir.split(secret, k, n, salt)
     except ValueError as e:
         print(e.args[0], file=sys.stderr, flush=True)
         sys.exit(1)
@@ -56,19 +69,6 @@ def get_metadata(args: Any) -> tuple[list[GFE], list[GFE], list[int]]:
     ]
     s = list(metadata["s"])
     return v, c, s
-
-
-def save_metadata(
-    args: Any, v: Iterable[GFE], c: Iterable[GFE], s: Iterable[int]
-) -> None:
-    json.dump(
-        {
-            "v": [list(bytes(v_i)) for v_i in v],
-            "c": [list(bytes(c_i)) for c_i in c],
-            "s": list(s),
-        },
-        args.file,
-    )
 
 
 def add_metadata_args(parser: argparse.ArgumentParser) -> None:
@@ -103,6 +103,18 @@ def recover(args: Any) -> None:
     )
 
 
+def required_length(nmin, nmax):
+    class RequiredLength(argparse.Action):
+        def __call__(self, parser, args, values, option_string=None):
+            if not nmin <= len(values) <= nmax:
+                raise argparse.ArgumentTypeError(
+                    f'argument "{self.dest}" requires between {nmin} and {nmax} arguments'
+                )
+            setattr(args, self.dest, values)
+
+    return RequiredLength
+
+
 # fmt: off
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -119,7 +131,9 @@ split_parser = subparsers.add_parser(
 )
 split_parser.add_argument(
     "secret",
+    nargs="+",
     type=mnemonic,
+    action=required_length(1, 2),
     help="BIP-0039 mnemonic"
 )
 split_parser.add_argument(
