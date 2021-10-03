@@ -27,9 +27,9 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     Implements only addition of polynomials and multiplication of polynomials by
     constants. Factory function `from_points` performs Lagrange interpolation.
 
-    NOTE: Stores coefficients in *reverse* order (from high order to low
-    order). Iteration and subscripting returns the coefficients in this reversed
-    order.
+    NOTE: Stores coefficients in big endian order (from high order to low
+    order). Iteration and subscripting returns the coefficients in this big
+    endian order.
     """
 
     __slots__ = ("_coeffs",)
