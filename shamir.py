@@ -46,19 +46,23 @@ def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
     )
 
 
-def _hash_GFEs(x: Iterable[GFE]) -> GFE:
-    h = hashlib.shake_256()
+def _hash_pair(x: tuple[GFE, GFE]) -> bytes:
     modulus: gf.BinaryPolynomial
+    if x[0].modulus != x[1].modulus:
+        raise ValueError("Different fields")
+    h = hashlib.shake_256()
+    h.update(
+        b"\xff" + _modulus_bytes(x[0].modulus) + bytes(x[0]) + bytes(x[1])
+    )
+    return h.digest(len(x[0]) * 2)
+
+
+def _hash_list(x: Iterable[bytes], length: int) -> bytes:
+    h = hashlib.shake_256()
+    h.update(b"\x00")
     for i in x:
-        try:
-            if i.modulus != modulus:
-                raise ValueError("Different fields")
-        except NameError:
-            modulus = i.modulus
-            h.update(b"\xff" + _modulus_bytes(modulus))
-        h.update(bytes(i))
-    byte_length = (modulus.bit_length() + 6) // 8
-    return gf.ModularBinaryPolynomial(h.digest(byte_length), modulus)
+        h.update(i)
+    return h.digest(length)
 
 
 def _evaluate(
@@ -79,7 +83,9 @@ def split(
     k: int,
     n: int,
     salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
-) -> tuple[tuple[GFE, ...], tuple[GFE, ...], tuple[GFE, ...], tuple[int, ...]]:
+) -> tuple[
+    tuple[GFE, ...], tuple[bytes, ...], tuple[GFE, ...], tuple[int, ...]
+]:
     """Split up to 2 members of GF(2^n) into some points (field element pairs).
 
     These points can be used to reconstruct the polynomial and extract the
@@ -127,15 +133,15 @@ def split(
 
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    v = tuple(_hash_GFEs(ys) for ys in zip(f_values, g_values))
-    r = _hash_GFEs(v)
+    v = tuple(_hash_pair(ys) for ys in zip(f_values, g_values))
+    r = _hash_list(v, byte_length)
     # from high to low order
     c = tuple(b + r * a for a, b in zip(f_coeffs, g_coeffs))
 
     return f_values, v, c, (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
 
 
-def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> GFE:
+def verify(y_f: GFE, v: Iterable[bytes], c: Iterable[GFE]) -> GFE:
     """Check whether a alleged secret share belongs to a group of shares.
 
     The group of shares is specified by the public `v` and `c` values returned
@@ -145,11 +151,11 @@ def verify(y_f: GFE, v: Iterable[GFE], c: Iterable[GFE]) -> GFE:
     """
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    z = _hash_GFEs(v) * y_f
+    z = _hash_list(v, len(y_f)) * y_f
     result: int = 0
     for x, v_i in zip(itertools.count(1), v):
         y_g = _evaluate(c, x) - z
-        if v_i == _hash_GFEs((y_f, y_g)):
+        if v_i == _hash_pair((y_f, y_g)):
             if result != 0:
                 return y_f.coerce(0)
             result = x
@@ -188,7 +194,7 @@ def _recover_coeffs(points: Iterable[tuple[GFE, GFE]]) -> list[GFE]:
 
 def recover(
     shares: Iterable[GFE],
-    v: Iterable[GFE],
+    v: Iterable[bytes],
     c: Collection[GFE],
     s: Iterable[int],
 ) -> tuple[GFE, ...]:

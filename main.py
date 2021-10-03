@@ -25,11 +25,11 @@ def to_mnemonic(x: GFE) -> str:
 
 
 def save_metadata(
-    args: Any, v: Iterable[GFE], c: Iterable[GFE], s: Iterable[int]
+    args: Any, v: Iterable[bytes], c: Iterable[GFE], s: Iterable[int]
 ) -> None:
     json.dump(
         {
-            "v": [list(bytes(v_i)) for v_i in v],
+            "v": [list(v_i) for v_i in v],
             "c": [list(bytes(c_i)) for c_i in c],
             "s": list(s),
         },
@@ -56,13 +56,10 @@ def split(args: Any) -> None:
     save_metadata(args, v, c, s)
 
 
-def get_metadata(args: Any) -> tuple[list[GFE], list[GFE], list[int]]:
+def get_metadata(args: Any) -> tuple[list[bytes], list[GFE], list[int]]:
     metadata = json.load(args.file)
     modulus = gf.get_modulus(len(metadata["v"][0]) * 8)
-    v = [
-        gf.ModularBinaryPolynomial(bytes(v_i), modulus)
-        for v_i in metadata["v"]
-    ]
+    v = [bytes(v_i) for v_i in metadata["v"]]
     c = [
         gf.ModularBinaryPolynomial(bytes(c_i), modulus)
         for c_i in metadata["c"]
