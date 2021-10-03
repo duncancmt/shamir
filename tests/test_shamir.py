@@ -17,7 +17,7 @@ class TestShamir(unittest.TestCase):
                     random.getrandbits(self.modulus.bit_length() - 1),
                     self.modulus,
                 )
-                shares, v, c = shamir.split(secret, 1, 1, salt)
+                shares, v, c, _ = shamir.split((secret,), 1, 1, salt)
                 self.assertEqual(int(shares[0]), int(secret))
 
     def test_verify(self) -> None:
