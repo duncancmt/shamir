@@ -94,6 +94,9 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         `x_i`. Strictly speaking, this isn't the *basis* polynomial because it's
         `y_i` at `x_i` instead of 1, but this difference avoids a multiplication
         by `y_i` later.
+
+        Points `points[j]` with x coordinate equal to `x_i` are silently
+        ignored. Other duplicate x coordinates will produce garbage.
         """
         # Division is very expensive, so we compute the denominator of the basis
         # polynomial here and invert once.
@@ -121,7 +124,7 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     ) -> SelfType:
         """Return the minimal-order polynomial that intercepts each point.
 
-        Points with duplicate x coordinates are silently ignored.
+        Duplicate x coordinates will produce garbage.
         """
         return functools.reduce(
             operator.add, (cls._basis_poly(point, points) for point in points)
