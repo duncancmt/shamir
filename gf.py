@@ -1,7 +1,5 @@
 """Classes to support the pythonic manipulation of GF(2^n) elements."""
 
-from __future__ import annotations
-
 import warnings
 from typing import Generic, Type, TypeVar, Union, overload
 
@@ -28,16 +26,6 @@ _default_prim_poly = {
     16: (5, 3, 2),
     8: (4, 3, 1),  # Rijndael/AES modulus
 }
-
-
-def get_modulus(bit_length: int) -> BinaryPolynomial:
-    """Get the default modulus for the given bit length."""
-    if bit_length < 128:
-        warnings.warn("Short bit length selected. Use this only for testing.")
-    modulus = (1 << bit_length) | 1
-    for i in _default_prim_poly[bit_length]:
-        modulus |= 1 << i
-    return BinaryPolynomial(modulus)
 
 
 class BinaryPolynomial:
@@ -202,6 +190,16 @@ class BinaryPolynomial:
         return NotImplemented
 
     del SelfType
+
+
+def get_modulus(bit_length: int) -> BinaryPolynomial:
+    """Get the default modulus for the given bit length."""
+    if bit_length < 128:
+        warnings.warn("Short bit length selected. Use this only for testing.")
+    modulus = (1 << bit_length) | 1
+    for i in _default_prim_poly[bit_length]:
+        modulus |= 1 << i
+    return BinaryPolynomial(modulus)
 
 
 PolynomialType = TypeVar("PolynomialType", bound=BinaryPolynomial)
