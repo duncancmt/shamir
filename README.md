@@ -155,3 +155,25 @@ $ ./main.py recover --file=meta.json 'eros stumble red pena dust emo audit insec
 usage: main.py recover [-h] --file FILE shares [shares ...]
 main.py recover: error: argument shares: invalid mnemonic value: 'inq noth tip bulk faculty town hed hat busi twin job abandon'
 ```
+
+## Two secrets with one set of shares
+
+```
+$ ./main.py split --needed 3 --shares 5 --file meta.json \
+> 'test test test test test test test test test test test junk' \
+> 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
+barrel accuse stomach wisdom neutral palace genius hamster fame grab motor result
+lizard index artist enough pole vacuum sound change hotel awkward oil satoshi
+exhibit provide again hard undo rabbit idle much toilet present stomach illegal
+kingdom scout lava salt network deal echo inhale between price cube replace
+retire buyer inner output text joy whisper setup obscure awful kind keep
+```
+
+```
+$ ./main.py recover --file meta.json \
+> 'retire buyer inner output text joy whisper setup obscure awful kind keep' \
+> 'barrel accuse stomach wisdom neutral palace genius hamster fame grab motor result' \
+> 'exhibit provide again hard undo rabbit idle much toilet present stomach illegal'
+test test test test test test test test test test test junk
+candy maple cake sugar pudding cream honey rich smooth crumble sweet treat
+```
