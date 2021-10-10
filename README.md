@@ -122,25 +122,25 @@ mnemonic words. As long as it's unambiguous, the program will accept it. Order
 also doesn't matter.
 
 ```
-$ ./main.py recover --file=meta.json 'ille bull bone shu parrot ach rese acci bund depend worl ano' \
-> 'idea his surge soul mead armo just noth tena peasant son fath' \
-> 'few feel host bulk nee ign obvious refo toda phr acquire rate'
+$ ./main.py recover --file=meta.json 'eros stumble red pena dust emo audit insect ais onli dutch rival' \
+> 'bare embo glimpse abov posi that inch deta believe there noth alm' \
+> 'inq noth tip bulk faculty town hed hat busi twin job already'
 test test test test test test test test test test test junk
 ```
 
 ### Not enough shares
 
 ```
-$ ./main.py recover --file=meta.json 'ille bull bone shu parrot ach rese acci bund depend worl ano' \
-> 'idea his surge soul mead armo just noth tena peasant son fath'
+$ ./main.py recover --file=meta.json 'eros stumble red pena dust emo audit insect ais onli dutch rival' \
+> 'bare embo glimpse abov posi that inch deta believe there noth alm'
 Too few valid shares. Invalid shares:
 ```
 
 ### Wrong share
 
 ```
-$ ./main.py recover --file=meta.json 'wel prot burs shin vot dos enac hundred atom worth scheme zebr' \
-> 'asp egg sing stadium arch stee prid convince stor log roya divi' \
+$ ./main.py recover --file=meta.json 'eros stumble red pena dust emo audit insect ais onli dutch rival' \
+> 'bare embo glimpse abov posi that inch deta believe there noth alm' \
 > 'test test test test test test test test test test test junk'
 Too few valid shares. Invalid shares:
         test test test test test test test test test test test junk
@@ -149,9 +149,9 @@ Too few valid shares. Invalid shares:
 ### Bad checksum
 
 ```
-$ ./main.py recover --file=meta.json 'ille bull bone shu parrot ach rese acci bund depend worl ano' \
-> 'idea his surge soul mead armo just noth tena peasant son fath' \
-> 'few feel host bulk nee ign obvious refo toda phr acquire abandon'
+$ ./main.py recover --file=meta.json 'eros stumble red pena dust emo audit insect ais onli dutch rival' \
+> 'bare embo glimpse abov posi that inch deta believe there noth alm' \
+> 'inq noth tip bulk faculty town hed hat busi twin job abandon'
 usage: main.py recover [-h] --file FILE shares [shares ...]
-main.py recover: error: argument shares: invalid mnemonic value: 'few feel host bulk nee ign obvious refo toda phr acquire abandon'
+main.py recover: error: argument shares: invalid mnemonic value: 'inq noth tip bulk faculty town hed hat busi twin job abandon'
 ```
