@@ -2,7 +2,7 @@
 
 ```
 $ ./main.py --help
-usage: main.py [-h] [--salt SALT] {split,verify,recover} ...
+usage: main.py [-h] {split,verify,recover} ...
 
 positional arguments:
   {split,verify,recover}
@@ -12,14 +12,13 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --salt SALT           Salt to distinguish multiple splits of the same secret
 ```
 
 ## Split
 
 ```
 $ ./main.py split --help
-usage: main.py split [-h] --shares SHARES --needed NEEDED [--file FILE] secret
+usage: main.py split [-h] --shares SHARES --needed NEEDED [--file FILE] [--salt SALT] secret [secret ...]
 
 positional arguments:
   secret           BIP-0039 mnemonic
@@ -29,18 +28,19 @@ optional arguments:
   --shares SHARES  Number of shares to calculate and print
   --needed NEEDED  Number of shares required to recover the secret
   --file FILE      Write public verification metadata here
+  --salt SALT      Salt to distinguish multiple splits of the same secret
 ```
 
 ### Correct usage
 
 ```
 $ ./main.py split 'test test test test test test test test test test test junk' --needed 3 --shares 5
-illegal bullet bone shuffle parrot achieve resemble accident bundle depend world another
-wild nice potato alone umbrella purse vacant height card effort cactus sell
-few feel host bulk need ignore obvious reform today phrase acquire rate
-idea history surge soul meadow armor just nothing tenant peasant song father
-ten pulse broken struggle wagon stick balance else burst elder unfair capital
-{"v": [[65, 209, 18, 109, 233, 218, 160, 191, 79, 88, 122, 73, 76, 158, 58, 48], [13, 90, 243, 220, 5, 138, 243, 123, 190, 74, 200, 120, 132, 230, 238, 77], [154, 143, 61, 185, 16, 178, 249, 69, 112, 81, 159, 167, 239, 244, 190, 134], [45, 147, 78, 199, 246, 214, 17, 174, 117, 139, 152, 146, 94, 48, 156, 44], [236, 196, 65, 188, 21, 113, 42, 218, 94, 125, 184, 35, 84, 53, 241, 131]], "c": [[74, 26, 185, 243, 234, 239, 58, 151, 6, 221, 22, 131, 148, 192, 93, 85], [26, 199, 252, 108, 232, 200, 89, 130, 33, 66, 227, 224, 192, 37, 188, 107], [27, 181, 166, 192, 53, 94, 105, 101, 160, 60, 66, 169, 77, 252, 125, 239]]}
+barely embody glimpse above position that inch detail believe there nothing almost
+inquiry nothing tip bulk faculty town hedgehog hat business twin job already
+right abuse funny scissors chaos tower shrug medal stage stand course juice
+erosion stumble reduce penalty dust emotion audit insect aisle online dutch rival
+like doctor anger laugh crisp emerge people nothing soldier pink artwork shell
+{"v": [[90, 228, 230, 87, 100, 207, 222, 192, 127, 57, 219, 41, 53, 224, 93, 95, 9, 180, 133, 221, 233, 5, 46, 175, 124, 140, 222, 36, 112, 176, 121, 89], [222, 53, 106, 235, 229, 109, 171, 208, 203, 27, 66, 73, 16, 120, 114, 121, 229, 63, 126, 98, 35, 122, 100, 76, 122, 94, 78, 218, 165, 26, 234, 205], [58, 138, 225, 32, 148, 108, 248, 23, 135, 54, 46, 189, 92, 40, 198, 117, 250, 177, 70, 198, 239, 9, 60, 93, 75, 79, 204, 25, 41, 57, 98, 203], [143, 221, 79, 95, 157, 12, 3, 178, 150, 81, 53, 72, 51, 61, 146, 150, 121, 137, 13, 233, 132, 67, 132, 50, 203, 13, 232, 236, 212, 219, 35, 98], [42, 35, 97, 59, 129, 77, 93, 214, 224, 22, 29, 235, 155, 108, 224, 179, 190, 174, 6, 211, 23, 43, 30, 211, 53, 84, 22, 42, 115, 26, 226, 250]], "c": [[214, 241, 120, 169, 235, 208, 82, 52, 62, 2, 217, 249, 109, 164, 170, 149], [18, 87, 194, 89, 183, 10, 198, 246, 93, 55, 156, 195, 119, 139, 143, 52], [234, 197, 13, 127, 13, 50, 115, 102, 255, 254, 31, 98, 72, 131, 161, 45]], "s": [2]}
 ```
 
 Distribute the mnemonics _privately_ to the shareholders. The JSON blob at the
@@ -54,18 +54,18 @@ good solution.
 
 ```
 $ ./main.py split 'tes tes tes tes tes tes tes tes tes tes tes junk' --needed 3 --shares 5 --file=meta.json
-illegal bullet bone shuffle parrot achieve resemble accident bundle depend world another
-wild nice potato alone umbrella purse vacant height card effort cactus sell
-few feel host bulk need ignore obvious reform today phrase acquire rate
-idea history surge soul meadow armor just nothing tenant peasant song father
-ten pulse broken struggle wagon stick balance else burst elder unfair capital
+barely embody glimpse above position that inch detail believe there nothing almost
+inquiry nothing tip bulk faculty town hedgehog hat business twin job already
+right abuse funny scissors chaos tower shrug medal stage stand course juice
+erosion stumble reduce penalty dust emotion audit insect aisle online dutch rival
+like doctor anger laugh crisp emerge people nothing soldier pink artwork shell
 ```
 
 ### Too much abbreviation
 
 ```
 $ ./main.py split 'tes tes tes tes tes tes tes tes tes tes tes jun' --needed 3 --shares 5
-usage: main.py split [-h] --shares SHARES --needed NEEDED [--file FILE] secret
+usage: main.py split [-h] --shares SHARES --needed NEEDED [--file FILE] [--salt SALT] secret [secret ...]
 main.py split: error: argument secret: invalid mnemonic value: 'tes tes tes tes tes tes tes tes tes tes tes jun'
 ```
 
@@ -73,14 +73,26 @@ main.py split: error: argument secret: invalid mnemonic value: 'tes tes tes tes 
 
 ```
 $ ./main.py split 'test test test test test test test test test test test abandon' --needed 3 --shares 5
-usage: main.py split [-h] --shares SHARES --needed NEEDED [--file FILE] secret
+usage: main.py split [-h] --shares SHARES --needed NEEDED [--file FILE] [--salt SALT] secret [secret ...]
 main.py split: error: argument secret: invalid mnemonic value: 'test test test test test test test test test test test abandon'
 ```
 
 ## Verify
 
 ```
-$ ./main.py verify 'illegal bullet bone shuffle parrot achieve resemble accident bundle depend world another' --file=meta.json ; echo $?
+$ ./main.py verify --help
+usage: main.py verify [-h] --file FILE share
+
+positional arguments:
+  share        Mnemonic share produced from the original using `split`
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --file FILE  File containing public share metadata
+```
+
+```
+$ ./main.py verify 'erosion stumble reduce penalty dust emotion audit insect aisle online dutch rival' --file=meta.json ; echo $?
 0
 ```
 
