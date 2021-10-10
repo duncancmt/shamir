@@ -63,8 +63,8 @@ def get_metadata(
     args: Any,
 ) -> tuple[list[bytes], shamir.FiniteFieldPolynomial, list[int]]:
     metadata = json.load(args.file)
-    modulus = gf.get_modulus(len(metadata["v"][0]) * 8)
     v = [bytes(v_i) for v_i in metadata["v"]]
+    modulus = gf.get_modulus(len(metadata["c"][0]) * 8)
     c = shamir.FiniteFieldPolynomial(
         gf.ModularBinaryPolynomial(bytes(c_i), modulus)
         for c_i in metadata["c"]
