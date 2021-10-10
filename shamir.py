@@ -11,12 +11,12 @@ import hashlib
 import itertools
 import operator
 from collections.abc import Iterable, Sequence
-from typing import Type, TypeVar, Union, overload
+from typing import Type, TypeAlias, TypeVar, overload
 
 import gf
 
 # Galois Field Element
-GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
+GFE: TypeAlias = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 class FiniteFieldPolynomial(Sequence[GFE]):
@@ -49,18 +49,18 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         )
 
     def __mul__(
-        self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
+        self: SelfType, other: GFE | gf.BinaryPolynomial | int | bytes
     ) -> SelfType:
         """Multiplication of a polynomial by a constant."""
         return type(self)((other * coeff) for coeff in self)
 
     def __rmul__(
-        self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
+        self: SelfType, other: GFE | gf.BinaryPolynomial | int | bytes
     ) -> SelfType:
         """Multiplication of a polynomial by a constant."""
         return self * other
 
-    def __call__(self, x: Union[GFE, gf.BinaryPolynomial, int, bytes]) -> GFE:
+    def __call__(self, x: GFE | gf.BinaryPolynomial | int | bytes) -> GFE:
         """Evaluation of the polynomial."""
         return functools.reduce(lambda accum, coeff: accum * x + coeff, self)
 
@@ -72,7 +72,7 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     def __getitem__(self, i: slice) -> Sequence[GFE]:
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[GFE, Sequence[GFE]]:
+    def __getitem__(self, i: int | slice) -> GFE | Sequence[GFE]:
         """Get a coefficient or range of coefficients."""
         return self._coeffs[i]
 
@@ -163,9 +163,7 @@ def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
     )
 
 
-def _hash_pair(
-    a: GFE, b: Union[GFE, gf.BinaryPolynomial, int, bytes]
-) -> bytes:
+def _hash_pair(a: GFE, b: GFE | gf.BinaryPolynomial | int | bytes) -> bytes:
     b = a.coerce(b)
     h = hashlib.shake_256()
     h.update(b"\xff" + _modulus_bytes(a.modulus) + bytes(a) + bytes(b))
@@ -181,10 +179,10 @@ def _hash_list(x: Iterable[bytes], length: int) -> bytes:
 
 
 def split(
-    secret: Union[tuple[GFE], tuple[GFE, GFE]],
+    secret: tuple[GFE] | tuple[GFE, GFE],
     k: int,
     n: int,
-    salt: Union[GFE, gf.BinaryPolynomial, int, bytes] = 0,
+    salt: GFE | gf.BinaryPolynomial | int | bytes = 0,
 ) -> tuple[
     tuple[GFE, ...], tuple[bytes, ...], FiniteFieldPolynomial, tuple[int, ...]
 ]:

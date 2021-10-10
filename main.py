@@ -4,14 +4,14 @@ import argparse
 import json
 import sys
 from collections.abc import Iterable, Sequence
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional, Type, TypeAlias
 
 import bip39
 import gf
 import shamir
 
 # Galois Field Element
-GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
+GFE: TypeAlias = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
 
 def mnemonic(x: str) -> GFE:
@@ -41,7 +41,7 @@ def save_metadata(
 
 
 def split(args: Any) -> None:
-    secret: Union[tuple[GFE], tuple[GFE, GFE]] = tuple(args.secret)  # type: ignore
+    secret: tuple[GFE] | tuple[GFE, GFE] = tuple(args.secret)  # type: ignore
     k: int = args.needed
     n: int = args.shares
     salt: int = args.salt
@@ -112,7 +112,7 @@ def required_length(nmin: int, nmax: int) -> Type[argparse.Action]:
             self,
             parser: argparse.ArgumentParser,
             args: argparse.Namespace,
-            values: Union[str, Sequence[Any], None],
+            values: str | Sequence[Any] | None,
             option_string: Optional[str] = None,
         ) -> None:
             if values is None:
