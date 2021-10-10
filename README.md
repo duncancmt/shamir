@@ -97,7 +97,7 @@ $ ./main.py verify 'erosion stumble reduce penalty dust emotion audit insect ais
 ```
 
 ```
-$ ./main.py verify 'test test test test test test test test test test test junk' --file=meta.json ; echo $?
+$ ./main.py verify 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat' --file=meta.json ; echo $?
 1
 ```
 
@@ -141,9 +141,9 @@ Too few valid shares. Invalid shares:
 ```
 $ ./main.py recover --file=meta.json 'eros stumble red pena dust emo audit insect ais onli dutch rival' \
 > 'bare embo glimpse abov posi that inch deta believe there noth alm' \
-> 'test test test test test test test test test test test junk'
+> 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
 Too few valid shares. Invalid shares:
-        test test test test test test test test test test test junk
+        candy maple cake sugar pudding cream honey rich smooth crumble sweet treat
 ```
 
 ### Bad checksum
