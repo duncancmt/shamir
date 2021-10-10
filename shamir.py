@@ -15,8 +15,6 @@ from typing import Type, TypeVar, Union, overload
 
 import gf
 
-T = TypeVar("T")
-
 # Galois Field Element
 GFE = gf.ModularBinaryPolynomial[gf.BinaryPolynomial]
 
@@ -130,6 +128,11 @@ class FiniteFieldPolynomial(Sequence[GFE]):
             operator.add, (cls._basis_poly(point, points) for point in points)
         )
 
+    del SelfType
+
+
+T = TypeVar("T")
+
 
 def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     """Return fixed-length sequential chunks of the iterable.
@@ -138,6 +141,9 @@ def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     is silently dropped.
     """
     return zip(*([iter(iterable)] * n))
+
+
+del T
 
 
 def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
@@ -295,4 +301,4 @@ def recover(
     return tuple(poly[i] for i in s)
 
 
-__all__ = ["split", "verify", "recover"]
+__all__ = ["split", "verify", "recover", "FiniteFieldPolynomial"]
