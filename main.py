@@ -130,12 +130,6 @@ def required_length(nmin: int, nmax: int) -> Type[argparse.Action]:
 
 # fmt: off
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--salt",
-    type=int,
-    default=0,
-    help="Salt to distinguish multiple splits of the same secret",
-)
 subparsers = parser.add_subparsers(required=True)
 
 split_parser = subparsers.add_parser(
@@ -166,6 +160,12 @@ split_parser.add_argument(
     type=argparse.FileType("w"),
     default=sys.stdout,
     help="Write public verification metadata here",
+)
+split_parser.add_argument(
+    "--salt",
+    type=int,
+    default=0,
+    help="Salt to distinguish multiple splits of the same secret",
 )
 split_parser.set_defaults(func=split)
 
