@@ -52,7 +52,7 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
     ) -> SelfType:
         """Multiplication of a polynomial by a constant."""
-        return type(self)((other * coeff) for coeff in self)
+        return type(self)((coeff * other) for coeff in self)
 
     def __rmul__(
         self: SelfType, other: Union[GFE, gf.BinaryPolynomial, int, bytes]
@@ -257,15 +257,16 @@ def verify(y_f: GFE, v: Iterable[bytes], c: FiniteFieldPolynomial) -> GFE:
     """
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    z = _hash_list(v, len(y_f)) * y_f
-    result: int = 0
-    for x, v_i in zip(itertools.count(1), v):
-        y_g = c(x) - z
+    coerce = y_f.coerce
+    r_y_f = _hash_list(v, len(y_f)) * y_f
+    result = coerce(0)
+    for x_i, v_i in zip(map(coerce, itertools.count(1)), v):
+        y_g = c(x_i) - r_y_f
         if v_i == _hash_pair(y_f, y_g):
             if result != 0:
-                return y_f.coerce(0)
-            result = x
-    return y_f.coerce(result)
+                return coerce(0)
+            result = x_i
+    return result
 
 
 def recover(
