@@ -259,14 +259,20 @@ def verify(y_f: GFE, v: Iterable[bytes], c: FiniteFieldPolynomial) -> GFE:
     # https://doi.org/10.1016/j.ins.2014.03.025
     coerce = y_f.coerce
     r_y_f = _hash_list(v, len(y_f)) * y_f
-    result = coerce(0)
+    result: GFE
     for x_i, v_i in zip(map(coerce, itertools.count(1)), v):
         y_g = c(x_i) - r_y_f
         if v_i == _hash_pair(y_f, y_g):
-            if result != 0:
+            try:
+                result
+            except NameError:
+                result = x_i
+            else:
                 return coerce(0)
-            result = x_i
-    return result
+    try:
+        return result
+    except NameError:
+        return coerce(0)
 
 
 def recover(
