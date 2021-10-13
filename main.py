@@ -32,7 +32,7 @@ def save_metadata(
 ) -> None:
     json.dump(
         {
-            "v": [list(v_i) for v_i in v],
+            "v": [list(v_i) for v_i in reversed(v)],
             "c": [list(bytes(c_i)) for c_i in c],
             "s": list(s),
         },
@@ -63,7 +63,7 @@ def get_metadata(
     args: Any,
 ) -> tuple[list[bytes], shamir.FiniteFieldPolynomial, list[int]]:
     metadata = json.load(args.file)
-    v = [bytes(v_i) for v_i in metadata["v"]]
+    v = [bytes(v_i) for v_i in reversed(metadata["v"])]
     modulus = gf.get_modulus(len(metadata["c"][0]) * 8)
     c = shamir.FiniteFieldPolynomial(
         gf.ModularBinaryPolynomial(bytes(c_i), modulus)
