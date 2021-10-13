@@ -252,27 +252,26 @@ def verify(y_f: GFE, v: Iterable[bytes], c: FiniteFieldPolynomial) -> GFE:
 
     The group of shares is specified by the public `v` and `c` values returned
     by `split`. If the share belongs to the group, this returns the x value
-    corresponding to the share. If the share does not belong to the group, this
-    returns 0.
+    corresponding to the share. If the share does not belong to the group,
+    raises ValueError.
     """
     # This is the hash-based verification scheme described in
     # https://doi.org/10.1016/j.ins.2014.03.025
-    coerce = y_f.coerce
-    r_y_f = _hash_list(v, len(y_f)) * y_f
+    ry_f = _hash_list(v, len(y_f)) * y_f
     result: GFE
-    for x_i, v_i in zip(map(coerce, itertools.count(1)), v):
-        y_g = c(x_i) - r_y_f
+    for x_i, v_i in zip(map(y_f.coerce, itertools.count(1)), v):
+        y_g = c(x_i) - ry_f
         if v_i == _hash_pair(y_f, y_g):
             try:
                 result
             except NameError:
                 result = x_i
             else:
-                return coerce(0)
+                raise ValueError("Duplicate y value")
     try:
         return result
     except NameError:
-        return coerce(0)
+        raise ValueError("Invalid share")
 
 
 def recover(
@@ -295,11 +294,10 @@ def recover(
     good_shares: set[tuple[GFE, GFE]] = set()
     bad_shares: list[GFE] = []
     for y in shares:
-        x = verify(y, v, c)
-        if x == 0:
+        try:
+            good_shares.add((verify(y, v, c), y))
+        except ValueError:
             bad_shares.append(y)
-        else:
-            good_shares.add((x, y))
         if len(good_shares) == len(c):
             break
     if len(good_shares) < len(c):

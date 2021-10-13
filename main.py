@@ -85,7 +85,12 @@ def add_metadata_args(parser: argparse.ArgumentParser) -> None:
 def verify(args: Any) -> None:
     share: GFE = args.share
     v, c, _ = get_metadata(args)
-    sys.exit(not shamir.verify(share, v, c))
+    try:
+        shamir.verify(share, v, c)
+    except ValueError:
+        sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 def recover(args: Any) -> None:
