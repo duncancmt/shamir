@@ -26,7 +26,7 @@ def to_mnemonic(x: GFE) -> str:
 
 def save_metadata(
     args: Any,
-    v: Iterable[bytes],
+    v: Sequence[bytes],
     c: shamir.FiniteFieldPolynomial,
     s: Iterable[int],
 ) -> None:
