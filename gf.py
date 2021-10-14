@@ -329,8 +329,12 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         r_new = self._value
         while r_new:
             quotient = r // r_new
-            r, r_new = r_new, r - quotient * r_new
-            t, t_new = t_new, t - quotient * t_new
+            r, r_new, t, t_new = (
+                r_new,
+                r - quotient * r_new,
+                t_new,
+                t - quotient * t_new,
+            )
         if r != 1:  # type: ignore # mypy strict-equality gives a false-positive
             raise ZeroDivisionError("zero element or modulus is reducible")
         return type(self)(t, self._modulus)
