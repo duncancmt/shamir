@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import itertools
 import json
 import sys
 from collections.abc import Iterable, Sequence
@@ -32,8 +33,8 @@ def save_metadata(
 ) -> None:
     json.dump(
         {
-            "v": [list(v_i) for v_i in reversed(v)],
-            "c": [list(bytes(c_i)) for c_i in c],
+            "v": {i: list(v_i) for i, v_i in zip(itertools.count(1), v)},
+            "c": {i: list(bytes(c_i)) for i, c_i in enumerate(reversed(c))},
             "s": list(s),
         },
         args.file,
@@ -63,12 +64,14 @@ def get_metadata(
     args: Any,
 ) -> tuple[list[bytes], shamir.FiniteFieldPolynomial, list[int]]:
     metadata = json.load(args.file)
-    v = [bytes(v_i) for v_i in reversed(metadata["v"])]
-    modulus = gf.get_modulus(len(metadata["c"][0]) * 8)
-    c = shamir.FiniteFieldPolynomial(
-        gf.ModularBinaryPolynomial(bytes(c_i), modulus)
-        for c_i in metadata["c"]
-    )
+    v = [b""] * len(metadata["v"])
+    for i, v_i in metadata["v"].items():
+        v[int(i) - 1] = bytes(v_i)
+    modulus = gf.get_modulus(len(metadata["c"]["0"]) * 8)
+    c = [gf.ModularBinaryPolynomial(0, modulus)] * len(metadata["c"])
+    for i, c_i in metadata["c"].items():
+        c[-int(i) - 1] = gf.ModularBinaryPolynomial(bytes(c_i), modulus)
+    c = shamir.FiniteFieldPolynomial(c)
     s = list(metadata["s"])
     return v, c, s
 
