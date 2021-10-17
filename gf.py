@@ -130,7 +130,7 @@ class BinaryPolynomial:
         """Remainder after division of polynomials over GF(2)."""
         return divmod(self, other)[1]
 
-    def __rmod__(self: SelfType, other: Union[int, bytes]) -> SelfType:
+    def __rmod__(self: SelfType, other: int) -> SelfType:
         """Remainder after division of polynomials over GF(2). Coerce int/bytes."""
         return self.coerce(other) % self
 
