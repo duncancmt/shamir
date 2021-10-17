@@ -54,12 +54,11 @@ class BinaryPolynomial:
         self: SelfType, other: Union[SelfType, int, bytes]
     ) -> SelfType:
         """Addition of polynomials over GF(2)."""
-        other = self.coerce(other)
-        return type(self)(self._value ^ other._value)
+        return self.coerce(self._value ^ self.coerce(other)._value)
 
     def __radd__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Addition of polynomials over GF(2). Coerce int/bytes."""
-        return type(self)(other) + self
+        return self.coerce(other) + self
 
     def __neg__(self: SelfType) -> SelfType:
         """Negation of polynomials over GF(2) is the identity."""
@@ -69,39 +68,36 @@ class BinaryPolynomial:
         self: SelfType, other: Union[SelfType, int, bytes]
     ) -> SelfType:
         """Subtraction of polynomials over GF(2) is addition."""
-        other = self.coerce(other)
-        return self + -other
+        return self + -self.coerce(other)
 
     def __rsub__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Subtraction of polynomials over GF(2) is addition. Coerce int/bytes."""
-        return type(self)(other) - self
+        return self.coerce(other) - self
 
     def __mul__(
         self: SelfType, other: Union[SelfType, int, bytes]
     ) -> SelfType:
         """Multiplication of polynomials over GF(2)."""
-        other = self.coerce(other)
         a = self._value
-        b = other._value
+        b = self.coerce(other)._value
         p = 0
         while b:
             if b & 1:
                 p ^= a
             b >>= 1
             a <<= 1
-        return type(self)(p)
+        return self.coerce(p)
 
     def __rmul__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Multiplication of polynomials over GF(2). Coerce int/bytes."""
-        return type(self)(other) * self
+        return self.coerce(other) * self
 
     def __divmod__(
         self: SelfType, other: Union[SelfType, int, bytes]
     ) -> tuple[SelfType, SelfType]:
         """Quotient and remainder of division of polynomials over GF(2)."""
-        other = self.coerce(other)
         numerator = self._value
-        denominator = other._value
+        denominator = self.coerce(other)._value
         if denominator == 0:
             raise ZeroDivisionError("division by zero")
         quotient = 0
@@ -110,13 +106,13 @@ class BinaryPolynomial:
             shift = remainder.bit_length() - denominator.bit_length()
             quotient ^= 1 << shift
             remainder ^= denominator << shift
-        return type(self)(quotient), type(self)(remainder)
+        return self.coerce(quotient), self.coerce(remainder)
 
     def __rdivmod__(
         self: SelfType, other: Union[int, bytes]
     ) -> tuple[SelfType, SelfType]:
         """Quotient and remainder of division of polynomials over GF(2). Coerce int/bytes."""
-        return divmod(type(self)(other), self)
+        return divmod(self.coerce(other), self)
 
     def __floordiv__(
         self: SelfType, other: Union[SelfType, int, bytes]
@@ -126,7 +122,7 @@ class BinaryPolynomial:
 
     def __rfloordiv__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Quotient after division of polynomials over GF(2). Coerce int/bytes."""
-        return type(self)(other) // self
+        return self.coerce(other) // self
 
     def __mod__(
         self: SelfType, other: Union[SelfType, int, bytes]
@@ -136,14 +132,14 @@ class BinaryPolynomial:
 
     def __rmod__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Remainder after division of polynomials over GF(2). Coerce int/bytes."""
-        return type(self)(other) % self
+        return self.coerce(other) % self
 
     def __pow__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Exponentiation of a polynomial over GF(2) by an integer."""
         if isinstance(other, bytes):
             other = int.from_bytes(other, "big")
         shifted = self
-        result = type(self)(1)
+        result = self.coerce(1)
         while other:
             if other & 1:
                 result *= shifted
@@ -242,14 +238,14 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         if isinstance(modulus, (int, bytes)):
             if isinstance(value, (int, bytes)):
                 raise TypeError("Unknown underlying PolynomialType")
-            modulus = type(value)(modulus)
+            modulus = value.coerce(modulus)
         self._modulus = modulus
         if isinstance(value, int):
-            value = type(modulus)(value)
+            value = modulus.coerce(value)
         elif isinstance(value, bytes):
             if len(value) != len(self):
                 raise ValueError("Length mismatch")
-            value = type(modulus)(value)
+            value = modulus.coerce(value)
         self._value = value % modulus
 
     def coerce(
@@ -266,14 +262,13 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
         """Addition is the same as in the underlying BinaryPolynomial."""
-        other = self.coerce(other)
-        return type(self)(self._value + other._value, self._modulus)
+        return self.coerce(self._value + self.coerce(other)._value)
 
     def __radd__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
         """Addition is the same as in the underlying BinaryPolynomial. Coerce BinaryPolynomial/int/bytes."""
-        return type(self)(other, self._modulus) + self
+        return self.coerce(other) + self
 
     def __neg__(self: SelfType) -> SelfType:
         """Negation is the identity."""
@@ -283,14 +278,13 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
         """Subtraction is the same as in the underlying BinaryPolynomial."""
-        other = self.coerce(other)
-        return self + -other
+        return self + -self.coerce(other)
 
     def __rsub__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
         """Subtraction is the same as in the underlying BinaryPolynomial. Coerce BinaryPolynomial/int/bytes."""
-        return type(self)(other, self._modulus) - self
+        return self.coerce(other) - self
 
     def __mul__(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
@@ -299,27 +293,25 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         # This could be made more efficient by performing modular reductions
         # incrementally during multiplication. However, this would complicate
         # the implementation.
-        other = self.coerce(other)
-        return type(self)(self._value * other._value, self._modulus)
+        return self.coerce(self._value * self.coerce(other)._value)
 
     def __rmul__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
         """Multiplication is the same as BinaryPolynomial, but with a modular reduction. Coerce BinaryPolynomial/int/bytes."""
-        return type(self)(other, self._modulus) * self
+        return self.coerce(other) * self
 
     def __truediv__(
         self: SelfType, other: Union[SelfType, PolynomialType, int, bytes]
     ) -> SelfType:
         """Division is multiplication by the inverse of the denominator."""
-        other = self.coerce(other)
-        return self * ~other
+        return self * ~self.coerce(other)
 
     def __rtruediv__(
         self: SelfType, other: Union[PolynomialType, int, bytes]
     ) -> SelfType:
         """Division is multiplication by the inverse of the denominator. Coerce BinaryPolynomial/int/bytes."""
-        return type(self)(other, self._modulus) / self
+        return self.coerce(other) / self
 
     def __invert__(self: SelfType) -> SelfType:
         """Inversion is performed by extended GCD over the BinaryPolynomial."""
@@ -337,14 +329,14 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
             )
         if r != 1:  # type: ignore # mypy strict-equality gives a false-positive
             raise ZeroDivisionError("zero element or modulus is reducible")
-        return type(self)(t, self._modulus)
+        return self.coerce(t)
 
     def __pow__(self: SelfType, other: Union[int, bytes]) -> SelfType:
         """Exponentiation by an integer is performed by square-and-multiply."""
         if isinstance(other, bytes):
             other = int.from_bytes(other, "big")
         shifted = self
-        result = type(self)(1, self._modulus)
+        result = self.coerce(1)
         while other:
             if other & 1:
                 result *= shifted
