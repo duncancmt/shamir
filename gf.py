@@ -179,11 +179,12 @@ class BinaryPolynomial:
 
     def __eq__(self, other: object) -> bool:
         """BinaryPolynomials are equal if their bit-fields are equal."""
-        if isinstance(other, (int, bytes)):
-            other = type(self)(other)
-        if isinstance(other, BinaryPolynomial) and self._value == other._value:
-            return True
-        return NotImplemented
+        try:
+            other = self.coerce(other)  # type: ignore
+        except TypeError:
+            return NotImplemented
+        else:
+            return self._value == other._value
 
     del SelfType
 
@@ -382,15 +383,14 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
 
     def __eq__(self, other: object) -> bool:
         """ModularBinaryPolynomials are equal if their values and moduli are equal."""
-        if isinstance(other, (self.polynomial_type, int, bytes)):
-            other = type(self)(self._value.coerce(other), self._modulus)
-        if (
-            isinstance(other, ModularBinaryPolynomial)
-            and self._value == other._value
-            and self._modulus == other._modulus
-        ):
-            return True
-        return NotImplemented
+        try:
+            other = self.coerce(other)  # type: ignore
+        except TypeError:
+            return NotImplemented
+        except ValueError:
+            return False  # different fields
+        else:
+            return self._value == other._value
 
     @property
     def modulus(self) -> PolynomialType:
