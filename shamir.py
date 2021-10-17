@@ -243,7 +243,7 @@ def split(
 
     # Coefficients are ordered from high to low order, so we supply indices from
     # high to low to get the constant coefficient first.
-    s = (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
+    s = (0,) + ((len(c) - 1,) if len(secret) > 1 else ())
     return f_values, v, c, s
 
 
@@ -303,7 +303,7 @@ def recover(
     if len(good_shares) < len(c):
         raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
     poly = FiniteFieldPolynomial.from_points(good_shares)
-    return tuple(poly[i] for i in s)
+    return tuple(poly[-i - 1] for i in s)
 
 
 __all__ = ["split", "verify", "recover", "FiniteFieldPolynomial"]
