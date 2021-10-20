@@ -180,7 +180,7 @@ class BinaryPolynomial:
     def __eq__(self, other: object) -> bool:
         """BinaryPolynomials are equal if their bit-fields are equal."""
         try:
-            other = self.coerce(other)  # type: ignore
+            other = self.coerce(other)  # type: ignore[arg-type]
         except TypeError:
             return NotImplemented
         else:
@@ -255,7 +255,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         """Coerce an int, bytes, or BinaryPolynomial to a ModularBinaryPolynomial."""
         if isinstance(other, (self.polynomial_type, int, bytes)):
             return type(self)(self._value.coerce(other), self._modulus)
-        if self._modulus != self._modulus.coerce(other._modulus):  # type: ignore # mypy fails to narrow
+        if self._modulus != self._modulus.coerce(other._modulus):  # type: ignore[union-attr] # mypy fails to narrow
             raise ValueError("Different fields")
         return type(self)(self._value.coerce(other._value), self._modulus)
 
@@ -328,7 +328,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
                 t_new,
                 t - quotient * t_new,
             )
-        if r != 1:  # type: ignore # mypy strict-equality gives a false-positive
+        if r != 1:  # type: ignore[comparison-overlap]
             raise ZeroDivisionError("zero element or modulus is reducible")
         return self.coerce(t)
 
@@ -384,7 +384,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     def __eq__(self, other: object) -> bool:
         """ModularBinaryPolynomials are equal if their values and moduli are equal."""
         try:
-            other = self.coerce(other)  # type: ignore
+            other = self.coerce(other)  # type: ignore[arg-type]
         except TypeError:
             return NotImplemented
         except ValueError:

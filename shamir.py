@@ -216,7 +216,7 @@ def split(
         + bytes(coerce(salt))
         + k.to_bytes(4, "big")
         + n.to_bytes(4, "big")
-        + (bytes(secret[1]) if len(secret) > 1 else b"")  # type: ignore
+        + (bytes(secret[1]) if len(secret) > 1 else b"")  # type: ignore[misc]
     )
     random_elements = tuple(
         coerce(bytes(x))
