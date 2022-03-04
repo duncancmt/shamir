@@ -302,7 +302,7 @@ def recover(
             break
     if len(good_shares) < len(c):
         raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
-    poly = FiniteFieldPolynomial.from_points(good_shares)
+    poly = type(c).from_points(good_shares)
     return tuple(poly[-i - 1] for i in s)
 
 
