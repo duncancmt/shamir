@@ -1,7 +1,7 @@
 """Classes to support the pythonic manipulation of GF(2^n) elements."""
 
 import warnings
-from typing import Generic, Type, TypeVar, overload
+from typing import Generic, Self, Type, TypeVar, overload
 
 _default_prim_poly = {
     # these excessively-large moduli are provided for future applications which
@@ -34,8 +34,6 @@ class BinaryPolynomial:
     __slots__ = ("_value",)
     _value: int
 
-    SelfType = TypeVar("SelfType", bound="BinaryPolynomial")
-
     def __init__(self, value: int | bytes) -> None:
         """Set the underlying bit-field representation, ensuring that it's positive."""
         if isinstance(value, bytes):
@@ -44,33 +42,33 @@ class BinaryPolynomial:
             value = -value
         self._value = value
 
-    def coerce(self: SelfType, other: SelfType | int | bytes) -> SelfType:
+    def coerce(self, other: Self | int | bytes) -> Self:
         """Coerce an integer or bytes to a BinaryPolynomial."""
         if isinstance(other, int | bytes):
             return type(self)(other)
         return type(self)(other._value)
 
-    def __add__(self: SelfType, other: SelfType | int | bytes) -> SelfType:
+    def __add__(self, other: Self | int | bytes) -> Self:
         """Addition of polynomials over GF(2)."""
         return self.coerce(self._value ^ self.coerce(other)._value)
 
-    def __radd__(self: SelfType, other: int | bytes) -> SelfType:
+    def __radd__(self, other: int | bytes) -> Self:
         """Addition of polynomials over GF(2). Coerce int/bytes."""
         return self.coerce(other) + self
 
-    def __neg__(self: SelfType) -> SelfType:
+    def __neg__(self) -> Self:
         """Negation of polynomials over GF(2) is the identity."""
         return self
 
-    def __sub__(self: SelfType, other: SelfType | int | bytes) -> SelfType:
+    def __sub__(self, other: Self | int | bytes) -> Self:
         """Subtraction of polynomials over GF(2) is addition."""
         return self + -self.coerce(other)
 
-    def __rsub__(self: SelfType, other: int | bytes) -> SelfType:
+    def __rsub__(self, other: int | bytes) -> Self:
         """Subtraction of polynomials over GF(2) is addition. Coerce int/bytes."""
         return self.coerce(other) - self
 
-    def __mul__(self: SelfType, other: SelfType | int | bytes) -> SelfType:
+    def __mul__(self, other: Self | int | bytes) -> Self:
         """Multiplication of polynomials over GF(2)."""
         a = self._value
         b = self.coerce(other)._value
@@ -82,13 +80,13 @@ class BinaryPolynomial:
             a <<= 1
         return self.coerce(p)
 
-    def __rmul__(self: SelfType, other: int | bytes) -> SelfType:
+    def __rmul__(self, other: int | bytes) -> Self:
         """Multiplication of polynomials over GF(2). Coerce int/bytes."""
         return self.coerce(other) * self
 
     def __divmod__(
-        self: SelfType, other: SelfType | int | bytes
-    ) -> tuple[SelfType, SelfType]:
+        self, other: Self | int | bytes
+    ) -> tuple[Self, Self]:
         """Quotient and remainder of division of polynomials over GF(2)."""
         numerator = self._value
         denominator = self.coerce(other)._value
@@ -103,30 +101,30 @@ class BinaryPolynomial:
         return self.coerce(quotient), self.coerce(remainder)
 
     def __rdivmod__(
-        self: SelfType, other: int | bytes
-    ) -> tuple[SelfType, SelfType]:
+        self, other: int | bytes
+    ) -> tuple[Self, Self]:
         """Quotient and remainder of division of polynomials over GF(2). Coerce int/bytes."""
         return divmod(self.coerce(other), self)
 
     def __floordiv__(
-        self: SelfType, other: SelfType | int | bytes
-    ) -> SelfType:
+        self, other: Self | int | bytes
+    ) -> Self:
         """Quotient after division of polynomials over GF(2)."""
         return divmod(self, other)[0]
 
-    def __rfloordiv__(self: SelfType, other: int | bytes) -> SelfType:
+    def __rfloordiv__(self, other: int | bytes) -> Self:
         """Quotient after division of polynomials over GF(2). Coerce int/bytes."""
         return self.coerce(other) // self
 
-    def __mod__(self: SelfType, other: SelfType | int | bytes) -> SelfType:
+    def __mod__(self, other: Self | int | bytes) -> Self:
         """Remainder after division of polynomials over GF(2)."""
         return divmod(self, other)[1]
 
-    def __rmod__(self: SelfType, other: int) -> SelfType:
+    def __rmod__(self, other: int) -> Self:
         """Remainder after division of polynomials over GF(2). Coerce int/bytes."""
         return self.coerce(other) % self
 
-    def __pow__(self: SelfType, other: int | bytes) -> SelfType:
+    def __pow__(self, other: int | bytes) -> Self:
         """Exponentiation of a polynomial over GF(2) by an integer."""
         if isinstance(other, bytes):
             other = int.from_bytes(other, "big")
@@ -178,8 +176,6 @@ class BinaryPolynomial:
         else:
             return self._value == other._value
 
-    del SelfType
-
 
 def get_modulus(bit_length: int) -> BinaryPolynomial:
     """Get the default modulus for the given bit length."""
@@ -200,10 +196,6 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     __slots__ = "_value", "_modulus"
     _value: PolynomialType
     _modulus: PolynomialType
-
-    SelfType = TypeVar(
-        "SelfType", bound="ModularBinaryPolynomial[PolynomialType]"
-    )
 
     @overload
     def __init__(
@@ -240,8 +232,8 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         self._value = value % modulus
 
     def coerce(
-        self: SelfType, other: SelfType | PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: Self | PolynomialType | int | bytes
+    ) -> Self:
         """Coerce an int, bytes, or BinaryPolynomial to a ModularBinaryPolynomial."""
         if isinstance(other, self.polynomial_type | int | bytes):
             return type(self)(self._value.coerce(other), self._modulus)
@@ -250,36 +242,36 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return type(self)(self._value.coerce(other._value), self._modulus)
 
     def __add__(
-        self: SelfType, other: SelfType | PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: Self | PolynomialType | int | bytes
+    ) -> Self:
         """Addition is the same as in the underlying BinaryPolynomial."""
         return self.coerce(self._value + self.coerce(other)._value)
 
     def __radd__(
-        self: SelfType, other: PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: PolynomialType | int | bytes
+    ) -> Self:
         """Addition is the same as in the underlying BinaryPolynomial. Coerce BinaryPolynomial/int/bytes."""
         return self.coerce(other) + self
 
-    def __neg__(self: SelfType) -> SelfType:
+    def __neg__(self) -> Self:
         """Negation is the identity."""
         return self
 
     def __sub__(
-        self: SelfType, other: SelfType | PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: Self | PolynomialType | int | bytes
+    ) -> Self:
         """Subtraction is the same as in the underlying BinaryPolynomial."""
         return self + -self.coerce(other)
 
     def __rsub__(
-        self: SelfType, other: PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: PolynomialType | int | bytes
+    ) -> Self:
         """Subtraction is the same as in the underlying BinaryPolynomial. Coerce BinaryPolynomial/int/bytes."""
         return self.coerce(other) - self
 
     def __mul__(
-        self: SelfType, other: SelfType | PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: Self | PolynomialType | int | bytes
+    ) -> Self:
         """Multiplication is the same as BinaryPolynomial, but with a modular reduction."""
         # This could be made more efficient by performing modular reductions
         # incrementally during multiplication. However, this would complicate
@@ -287,24 +279,24 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
         return self.coerce(self._value * self.coerce(other)._value)
 
     def __rmul__(
-        self: SelfType, other: PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: PolynomialType | int | bytes
+    ) -> Self:
         """Multiplication is the same as BinaryPolynomial, but with a modular reduction. Coerce BinaryPolynomial/int/bytes."""
         return self.coerce(other) * self
 
     def __truediv__(
-        self: SelfType, other: SelfType | PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: Self | PolynomialType | int | bytes
+    ) -> Self:
         """Division is multiplication by the inverse of the denominator."""
         return self * ~self.coerce(other)
 
     def __rtruediv__(
-        self: SelfType, other: PolynomialType | int | bytes
-    ) -> SelfType:
+        self, other: PolynomialType | int | bytes
+    ) -> Self:
         """Division is multiplication by the inverse of the denominator. Coerce BinaryPolynomial/int/bytes."""
         return self.coerce(other) / self
 
-    def __invert__(self: SelfType) -> SelfType:
+    def __invert__(self) -> Self:
         """Inversion is performed by extended GCD over the BinaryPolynomial."""
         t: PolynomialType | int = 0
         t_new: PolynomialType | int = 1
@@ -322,7 +314,7 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
             raise ZeroDivisionError("zero element or modulus is reducible")
         return self.coerce(t)
 
-    def __pow__(self: SelfType, other: int | bytes) -> SelfType:
+    def __pow__(self, other: int | bytes) -> Self:
         """Exponentiation by an integer is performed by square-and-multiply."""
         if isinstance(other, bytes):
             other = int.from_bytes(other, "big")
@@ -391,8 +383,6 @@ class ModularBinaryPolynomial(Generic[PolynomialType]):
     def polynomial_type(self) -> Type[PolynomialType]:
         """The underlying BinaryPolynomial type."""
         return type(self._value)
-
-    del SelfType
 
 
 __all__ = [

@@ -11,7 +11,7 @@ import hashlib
 import itertools
 import operator
 from collections.abc import Iterable, Sequence
-from typing import Type, TypeAlias, TypeVar, overload
+from typing import Self, Type, TypeAlias, TypeVar, overload
 
 import gf
 
@@ -33,13 +33,11 @@ class FiniteFieldPolynomial(Sequence[GFE]):
     __slots__ = ("_coeffs",)
     _coeffs: tuple[GFE, ...]
 
-    SelfType = TypeVar("SelfType", bound="FiniteFieldPolynomial")
-
     def __init__(self, coeffs: Iterable[GFE]) -> None:
         """Store the coefficients."""
         self._coeffs = tuple(coeffs)
 
-    def __add__(self: SelfType, other: SelfType) -> SelfType:
+    def __add__(self, other: Self) -> Self:
         """Coefficient-wise addition of polynomials."""
         a, b = self._coeffs, other._coeffs
         if len(b) > len(a):
@@ -49,14 +47,14 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         )
 
     def __mul__(
-        self: SelfType, other: GFE | gf.BinaryPolynomial | int | bytes
-    ) -> SelfType:
+        self, other: GFE | gf.BinaryPolynomial | int | bytes
+    ) -> Self:
         """Multiplication of a polynomial by a constant."""
         return type(self)((coeff * other) for coeff in self)
 
     def __rmul__(
-        self: SelfType, other: GFE | gf.BinaryPolynomial | int | bytes
-    ) -> SelfType:
+        self, other: GFE | gf.BinaryPolynomial | int | bytes
+    ) -> Self:
         """Multiplication of a polynomial by a constant."""
         return self * other
 
@@ -82,10 +80,10 @@ class FiniteFieldPolynomial(Sequence[GFE]):
 
     @classmethod
     def _basis_poly(
-        cls: Type[SelfType],
+        cls: Type[Self],
         point: tuple[GFE, GFE],
         points: Iterable[tuple[GFE, GFE]],
-    ) -> SelfType:
+    ) -> Self:
         """Get the Lagrange basis polynomial for `point` := (`x_i`, `y_i`).
 
         The polynomial for `x_i` is zero for all `x_j != x_i` and is `y_i` at
@@ -118,8 +116,8 @@ class FiniteFieldPolynomial(Sequence[GFE]):
 
     @classmethod
     def from_points(
-        cls: Type[SelfType], points: Iterable[tuple[GFE, GFE]]
-    ) -> SelfType:
+        cls: Type[Self], points: Iterable[tuple[GFE, GFE]]
+    ) -> Self:
         """Return the minimal-order polynomial that intercepts each point.
 
         Duplicate x coordinates will produce garbage.
@@ -127,8 +125,6 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         return functools.reduce(
             operator.add, (cls._basis_poly(point, points) for point in points)
         )
-
-    del SelfType
 
 
 T = TypeVar("T")
