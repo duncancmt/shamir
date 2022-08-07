@@ -42,7 +42,7 @@ def save_metadata(
 
 
 def split(args: Any) -> None:
-    secret: tuple[GFE] | tuple[GFE, GFE] = tuple(args.secret)  # type: ignore
+    secret: tuple[GFE] | tuple[GFE, GFE] = tuple(args.secret)  # type: ignore[assignment]
     k: int = args.needed
     n: int = args.shares
     salt: int = args.salt

@@ -214,7 +214,7 @@ def split(
         + bytes(coerce(salt))
         + k.to_bytes(4, "big")
         + n.to_bytes(4, "big")
-        + (bytes(secret[1]) if len(secret) > 1 else b"")  # type: ignore
+        + (bytes(secret[1]) if len(secret) > 1 else b"")  # type: ignore[misc]
     )
     random_elements = tuple(
         coerce(bytes(x))
@@ -241,7 +241,7 @@ def split(
 
     # Coefficients are ordered from high to low order, so we supply indices from
     # high to low to get the constant coefficient first.
-    s = (len(c) - 1,) + ((0,) if len(secret) > 1 else ())
+    s = (0,) + ((len(c) - 1,) if len(secret) > 1 else ())
     return f_values, v, c, s
 
 
@@ -300,8 +300,8 @@ def recover(
             break
     if len(good_shares) < len(c):
         raise ValueError("Too few valid shares. Invalid shares:", bad_shares)
-    poly = FiniteFieldPolynomial.from_points(good_shares)
-    return tuple(poly[i] for i in s)
+    poly = type(c).from_points(good_shares)
+    return tuple(poly[-i - 1] for i in s)
 
 
 __all__ = ["split", "verify", "recover", "FiniteFieldPolynomial"]

@@ -81,7 +81,7 @@ class TestModularBinaryPolynomialMultiplyExhaustive(unittest.TestCase):
     def setUp(self) -> None:
         self.modulus = gf.get_modulus(8)
 
-    def test_add_exhaustive(self) -> None:
+    def test_mul_exhaustive(self) -> None:
         counts: MutableMapping[int, int] = collections.Counter()
         for x in range(1 << 8):
             for y in range(1 << 8):
