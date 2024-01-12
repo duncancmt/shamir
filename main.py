@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import itertools
 import json
 import sys
 from collections.abc import Iterable, Sequence
@@ -33,7 +32,7 @@ def save_metadata(
 ) -> None:
     json.dump(
         {
-            "v": {i: list(v_i) for i, v_i in zip(itertools.count(1), v)},
+            "v": {i: list(v_i) for i, v_i in enumerate(v, start=1)},
             "c": {i: list(bytes(c_i)) for i, c_i in enumerate(reversed(c))},
             "s": list(s),
         },
