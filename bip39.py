@@ -51,8 +51,8 @@ def encode(entropy: bytes, sep: str = " ") -> str:
     checksum_int, checksum_bits = _checksum(entropy)
     to_encode = (entropy_int << checksum_bits) | checksum_int
     result: list[str] = []
-    for i in range(num_words - 1, -1, -1):  # big endian
-        word_index = (to_encode >> (i * 11)) & 2047
+    for i in range((num_words - 1) * 11, -1, -11):  # big endian
+        word_index = (to_encode >> i) & 2047
         result.append(wordlist[word_index])
     return sep.join(result)
 
