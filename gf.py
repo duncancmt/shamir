@@ -1,7 +1,7 @@
 """Classes to support the pythonic manipulation of GF(2^n) elements."""
 
 import warnings
-from typing import Generic, Self, Type, TypeVar, overload
+from typing import Self, Type, overload
 
 _default_prim_poly = {
     # these excessively-large moduli are provided for future applications which
@@ -187,10 +187,8 @@ def get_modulus(bit_length: int) -> BinaryPolynomial:
     return BinaryPolynomial(modulus)
 
 
-PolynomialType = TypeVar("PolynomialType", bound=BinaryPolynomial)
 
-
-class ModularBinaryPolynomial(Generic[PolynomialType]):
+class ModularBinaryPolynomial[PolynomialType]:
     """An element of the field of binary polynomials, mod the primitive polynomial."""
 
     __slots__ = "_value", "_modulus"

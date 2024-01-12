@@ -11,7 +11,7 @@ import hashlib
 import itertools
 import operator
 from collections.abc import Iterable, Sequence
-from typing import Self, Type, TypeAlias, TypeVar, overload
+from typing import Self, Type, TypeAlias, overload
 
 import gf
 
@@ -127,19 +127,13 @@ class FiniteFieldPolynomial(Sequence[GFE]):
         )
 
 
-T = TypeVar("T")
-
-
-def grouper(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+def grouper[T](iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     """Return fixed-length sequential chunks of the iterable.
 
     If there aren't enough elements of the iterable to fill the last chunk, it
     is silently dropped.
     """
     return zip(*([iter(iterable)] * n))
-
-
-del T
 
 
 def _modulus_bytes(modulus: gf.BinaryPolynomial) -> bytes:
